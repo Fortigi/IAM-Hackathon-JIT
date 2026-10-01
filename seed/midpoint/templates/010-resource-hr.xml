@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  HR-bron: leest seed/users.csv (op de VM gekopieerd naar resource_files/hr.csv).
+  Maakt midPoint-gebruikers aan; status 'disabled' wordt een uitgeschakelde gebruiker.
+  Template: het UPN-domein (JIT_UPN_DOMAIN) wordt ingevuld door scripts/vm-bootstrap.sh.
+-->
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+          xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+          oid="c752a37d-2f6f-4d08-8779-bdb0e6b47c9b">
+    <name>HR (CSV)</name>
+    <description>Fictieve HR-bron voor de JIT-hackathon (seed/users.csv)</description>
+    <connectorRef>
+        <filter>
+            <q:text>connectorType = "com.evolveum.polygon.connector.csv.CsvConnector"</q:text>
+        </filter>
+    </connectorRef>
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:configurationProperties
+                xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.evolveum.polygon.connector-csv/com.evolveum.polygon.connector.csv.CsvConnector">
+            <cfg:filePath>/opt/midpoint/var/resource_files/hr.csv</cfg:filePath>
+            <cfg:encoding>utf-8</cfg:encoding>
+            <cfg:fieldDelimiter>,</cfg:fieldDelimiter>
+            <cfg:multivalueDelimiter>;</cfg:multivalueDelimiter>
+            <cfg:quote>"</cfg:quote>
+            <cfg:quoteMode>MINIMAL</cfg:quoteMode>
+            <cfg:uniqueAttribute>username</cfg:uniqueAttribute>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+
+    <schemaHandling>
+        <objectType>
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>HR-medewerker</displayName>
+            <default>true</default>
+            <objectClass>ri:AccountObjectClass</objectClass>
+            <focus>
+                <type>UserType</type>
+                <archetypeRef oid="00000000-0000-0000-0000-000000000702"/>
+            </focus>
+
+            <attribute>
+                <ref>ri:username</ref>
+                <inbound>
+                    <name>username naar name</name>
+                    <strength>strong</strength>
+                    <target><path>$focus/name</path></target>
+                </inbound>
+                <inbound>
+                    <name>username naar e-mail</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script><code>input + '@${JIT_UPN_DOMAIN}'</code></script>
+                    </expression>
+                    <target><path>$focus/emailAddress</path></target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:employeeId</ref>
+                <inbound>
+                    <strength>strong</strength>
+                    <target><path>$focus/personalNumber</path></target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:givenName</ref>
+                <inbound>
+                    <strength>strong</strength>
+                    <target><path>$focus/givenName</path></target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:familyName</ref>
+                <inbound>
+                    <strength>strong</strength>
+                    <target><path>$focus/familyName</path></target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:title</ref>
+                <inbound>
+                    <strength>strong</strength>
+                    <target><path>$focus/title</path></target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <!-- Manager-username; Corteza gebruikt dit om de goedkeurder te bepalen -->
+                <ref>ri:manager</ref>
+                <inbound>
+                    <strength>strong</strength>
+                    <target><path>$focus/costCenter</path></target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:status</ref>
+                <inbound>
+                    <name>status naar administrativeStatus</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+                                import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+                                input == 'active' ? ActivationStatusType.ENABLED : ActivationStatusType.DISABLED
+                            </code>
+                        </script>
+                    </expression>
+                    <target><path>$focus/activation/administrativeStatus</path></target>
+                </inbound>
+            </attribute>
+
+            <correlation>
+                <correlators>
+                    <items>
+                        <name>Op gebruikersnaam</name>
+                        <item><ref>name</ref></item>
+                    </items>
+                </correlators>
+            </correlation>
+
+            <synchronization>
+                <reaction>
+                    <situation>linked</situation>
+                    <actions><synchronize/></actions>
+                </reaction>
+                <reaction>
+                    <situation>unmatched</situation>
+                    <actions><addFocus/></actions>
+                </reaction>
+                <reaction>
+                    <situation>unlinked</situation>
+                    <actions><link/></actions>
+                </reaction>
+                <reaction>
+                    <situation>deleted</situation>
+                    <actions><unlink/></actions>
+                </reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+</resource>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Catalogus van JIT-rechten. Elke grant wordt een assignment op deze rol met activation/validTo.
+  - ENT-03 en ENT-04: midPoint voert uit (groepslidmaatschap in Entra via de MS Graph-connector).
+  - Overige: alleen registratie; Corteza (authentik, PIM) voert uit. Zodra de authentik-connector
+    werkt, krijgen ENT-01 en ENT-02 ook een inducement.
+  Extensie-loze opslag van metadata: identifier = ENT-nummer, subtype = normaal/privileged,
+  documentation = doelsysteem|groep|maximale duur.
+-->
+<objects xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+         xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+
+    <role oid="98b404e9-06bb-47d0-9aca-38b4337c685e">
+        <name>ENT-01 Team Wiki gebruiker</name>
+        <description>JIT normaal: authentik, groep app-wiki-users. Uitvoering: Corteza (midPoint registreert).</description>
+        <documentation>authentik|app-wiki-users|PT8H</documentation>
+        <subtype>jit-normaal</subtype>
+        <identifier>ENT-01</identifier>
+        <requestable>true</requestable>
+    </role>
+
+    <role oid="e2db27be-590f-4c81-915f-927bc4d3c09a">
+        <name>ENT-02 authentik beheerder</name>
+        <description>JIT privileged: authentik, groep priv-authentik-admins. Uitvoering: Corteza (midPoint registreert).</description>
+        <documentation>authentik|priv-authentik-admins|PT1H</documentation>
+        <subtype>jit-privileged</subtype>
+        <identifier>ENT-02</identifier>
+        <requestable>true</requestable>
+    </role>
+
+    <role oid="46c3bb43-ebcc-44c3-a0e6-4c161505e071">
+        <name>ENT-03 Finance Portal lezer</name>
+        <description>JIT normaal: Entra zonder P2, groep app-finance-readers. Uitvoering: midPoint.</description>
+        <documentation>Entra zonder P2|app-finance-readers|PT8H</documentation>
+        <subtype>jit-normaal</subtype>
+        <identifier>ENT-03</identifier>
+        <requestable>true</requestable>
+        <inducement>
+            <construction>
+                <resourceRef oid="79913da0-c3de-4b49-8b9a-fac52647845d" type="c:ResourceType"/>
+                <kind>account</kind>
+                <intent>default</intent>
+                <association>
+                    <ref>ri:group</ref>
+                    <outbound>
+                        <expression>
+                            <associationTargetSearch>
+                                <filter>
+                                    <q:equal>
+                                        <q:path>attributes/ri:displayName</q:path>
+                                        <q:value>app-finance-readers</q:value>
+                                    </q:equal>
+                                </filter>
+                                <searchStrategy>onResourceIfNeeded</searchStrategy>
+                            </associationTargetSearch>
+                        </expression>
+                    </outbound>
+                </association>
+            </construction>
+        </inducement>
+    </role>
+
+    <role oid="b78d0d13-b274-4f33-8d4c-4281cebea8ef">
+        <name>ENT-04 Entra Helpdesk Administrator</name>
+        <description>JIT privileged: Entra zonder P2, groep priv-entra-helpdesk-admins. Uitvoering: midPoint.</description>
+        <documentation>Entra zonder P2|priv-entra-helpdesk-admins|PT2H</documentation>
+        <subtype>jit-privileged</subtype>
+        <identifier>ENT-04</identifier>
+        <requestable>true</requestable>
+        <inducement>
+            <construction>
+                <resourceRef oid="79913da0-c3de-4b49-8b9a-fac52647845d" type="c:ResourceType"/>
+                <kind>account</kind>
+                <intent>default</intent>
+                <association>
+                    <ref>ri:group</ref>
+                    <outbound>
+                        <expression>
+                            <associationTargetSearch>
+                                <filter>
+                                    <q:equal>
+                                        <q:path>attributes/ri:displayName</q:path>
+                                        <q:value>priv-entra-helpdesk-admins</q:value>
+                                    </q:equal>
+                                </filter>
+                                <searchStrategy>onResourceIfNeeded</searchStrategy>
+                            </associationTargetSearch>
+                        </expression>
+                    </outbound>
+                </association>
+            </construction>
+        </inducement>
+    </role>
+
+    <role oid="d33f888e-3dfe-4115-b91e-f7e31a0cfec3">
+        <name>ENT-05 HR Portal editor</name>
+        <description>JIT normaal: Entra met P2 (PIM), groep pim-app-hr-editors. Uitvoering: Corteza (midPoint registreert).</description>
+        <documentation>Entra met P2 (PIM)|pim-app-hr-editors|PT8H</documentation>
+        <subtype>jit-normaal</subtype>
+        <identifier>ENT-05</identifier>
+        <requestable>true</requestable>
+    </role>
+
+    <role oid="d4785e33-f647-4dec-b064-1ce02742f652">
+        <name>ENT-06 Entra User Administrator</name>
+        <description>JIT privileged: Entra met P2 (PIM), groep pim-entra-user-admins. Uitvoering: Corteza (midPoint registreert).</description>
+        <documentation>Entra met P2 (PIM)|pim-entra-user-admins|PT1H</documentation>
+        <subtype>jit-privileged</subtype>
+        <identifier>ENT-06</identifier>
+        <requestable>true</requestable>
+    </role>
+</objects>

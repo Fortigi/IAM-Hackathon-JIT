@@ -1,0 +1,7 @@
+employeeId,username,givenName,familyName,title,manager,status
+E1001,anna.jansen,Anna,Jansen,Medewerker,carla.bakker,active
+E1002,bram.devries,Bram,de Vries,Engineer,carla.bakker,active
+E1003,carla.bakker,Carla,Bakker,Manager,,active
+E1004,dirk.visser,Dirk,Visser,Resource owner platform,,active
+E1005,eva.smit,Eva,Smit,Security officer,,active
+E1006,gijs.oud,Gijs,Oud,Oud-medewerker,carla.bakker,disabled

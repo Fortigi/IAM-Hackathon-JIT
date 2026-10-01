@@ -1,0 +1,677 @@
+<title>JIT Hackathon Blauwdruk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: één leeskolom (max ~62rem) met een sticky inhoudsopgave op brede schermen; keuzes als optieblokken met voor/nadelen naast elkaar */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --surface-2:#eceff3; --fg:#1b2230; --muted:#5a6475; --line:#d5dae2;
+  --accent:#12606b; --accent-soft:#dcecee; --priv:#9b2a44; --priv-soft:#f6e3e8; --ok:#2f6b3a; --ok-soft:#e1efe3; --warn:#8a5a00; --warn-soft:#f7ecd4;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161d; --surface:#1a2029; --surface-2:#222a35; --fg:#e4e8ee; --muted:#9aa4b3; --line:#323c4a;
+  --accent:#5fb8c2; --accent-soft:#16343a; --priv:#e0798f; --priv-soft:#3a1b24; --ok:#7cc38a; --ok-soft:#18311d; --warn:#e2b458; --warn-soft:#3a2d12; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161d; --surface:#1a2029; --surface-2:#222a35; --fg:#e4e8ee; --muted:#9aa4b3; --line:#323c4a;
+  --accent:#5fb8c2; --accent-soft:#16343a; --priv:#e0798f; --priv-soft:#3a1b24; --ok:#7cc38a; --ok-soft:#18311d; --warn:#e2b458; --warn-soft:#3a2d12; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:400 1.02rem/1.6 var(--f-body);padding-inline:16px;padding-block:0 4rem}
+.wrap{max-width:74rem;margin:0 auto;display:grid;grid-template-columns:13rem minmax(0,1fr);gap:3rem}
+@media (max-width:960px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}.toc{display:none}}
+.toc{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-top:2.5rem;font-size:.9rem}
+.toc a{display:block;color:var(--muted);text-decoration:none;padding:.22rem 0 .22rem .7rem;border-left:2px solid var(--line)}
+.toc a:hover,.toc a:focus-visible{color:var(--accent);border-left-color:var(--accent);outline:none}
+main{min-width:0;max-width:62rem}
+header.top{padding-block:2.5rem 1.5rem;border-bottom:1px solid var(--line);margin-bottom:1rem}
+.eyebrow{font:600 .75rem/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 2.3rem/1.1 var(--f-display);letter-spacing:-.01em;margin:.6rem 0 .8rem;text-wrap:balance}
+h2{font:700 1.45rem/1.2 var(--f-display);margin:3rem 0 .8rem;text-wrap:balance;scroll-margin-top:1rem}
+h3{font:600 1.08rem/1.3 var(--f-display);margin:1.8rem 0 .5rem;text-wrap:balance}
+p,li{max-width:68ch}
+p{margin:.5rem 0}
+.lede{font-size:1.14rem;color:var(--fg)}
+.meta{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;font:500 .82rem/1.4 var(--f-mono);color:var(--muted);margin-top:1rem}
+.meta b{color:var(--fg);font-weight:500}
+code,.mono{font-family:var(--f-mono);font-size:.86em}
+code{background:var(--surface-2);padding:.08em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre{background:var(--surface-2);border:1px solid var(--line);padding:.9rem 1rem;border-radius:6px;overflow-x:auto;font:400 .82rem/1.5 var(--f-mono);margin:.8rem 0}
+pre code{background:none;padding:0}
+a{color:var(--accent)}
+ul,ol{padding-left:1.25rem}
+li{margin:.2rem 0}
+
+.chip{display:inline-block;font:600 .7rem/1 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;padding:.3rem .45rem;border-radius:3px;vertical-align:.12em;white-space:nowrap}
+.c-norm{background:var(--accent-soft);color:var(--accent)}
+.c-priv{background:var(--priv-soft);color:var(--priv)}
+.c-open{background:var(--warn-soft);color:var(--warn)}
+.c-ok{background:var(--ok-soft);color:var(--ok)}
+
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:1.2rem 0}
+.summary>div{background:var(--surface);padding:1rem 1.1rem;min-width:0}
+.summary h4{margin:0 0 .3rem;font:600 .78rem/1.2 var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.summary p{margin:0;font-size:.97rem}
+
+.tbl{overflow-x:auto;margin:1rem 0;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;vertical-align:top;padding:.55rem .75rem;border-bottom:1px solid var(--line)}
+th{font:600 .74rem/1.3 var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+td.nowrap{white-space:nowrap}
+
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.8rem;margin:1rem 0}
+.diagram svg{display:block;min-width:760px;width:100%;height:auto}
+svg text{fill:var(--fg);font-family:var(--f-body)}
+svg .t-s{font-size:11px;fill:var(--muted)}
+svg .t-m{font-family:var(--f-mono);font-size:10.5px;fill:var(--muted)}
+svg .t-b{font-weight:700;font-size:14px;font-family:var(--f-display)}
+svg .t-h{font-weight:600;font-size:12px;fill:var(--muted);font-family:var(--f-mono);letter-spacing:.04em}
+svg .bx{fill:var(--surface);stroke:var(--line);stroke-width:1.2}
+svg .bx2{fill:var(--surface-2);stroke:var(--line);stroke-width:1.2}
+svg .rg{fill:none;stroke:var(--accent);stroke-width:1.4;stroke-dasharray:5 4}
+svg .svc{fill:var(--surface);stroke:var(--accent);stroke-width:1.6}
+svg .ext{fill:var(--surface);stroke:var(--priv);stroke-width:1.6}
+svg .ar{fill:none;stroke:var(--accent);stroke-width:1.6}
+svg .ar2{fill:none;stroke:var(--priv);stroke-width:1.6}
+svg .mk{fill:var(--accent)}
+svg .mk2{fill:var(--priv)}
+
+.flow{counter-reset:s;list-style:none;padding:0;margin:1rem 0;display:grid;gap:.5rem}
+.flow li{counter-increment:s;display:grid;grid-template-columns:2rem minmax(0,1fr);gap:.6rem;max-width:none;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.6rem .8rem}
+.flow li::before{content:counter(s);font:700 .95rem/1.6 var(--f-mono);color:var(--accent)}
+.who{font:600 .78rem/1 var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+
+.decision{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:1.1rem 1.2rem;margin:1.2rem 0}
+.decision h3{margin:0 0 .3rem;display:flex;flex-wrap:wrap;gap:.5rem;align-items:baseline}
+.decision .q{color:var(--muted);margin:0 0 .8rem}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:.8rem}
+.opt{border:1px solid var(--line);border-radius:6px;padding:.75rem .85rem;background:var(--bg);min-width:0}
+.opt.rec{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+.opt h4{margin:0 0 .35rem;font:600 .98rem/1.3 var(--f-display);display:flex;gap:.45rem;align-items:baseline;flex-wrap:wrap}
+.opt p{font-size:.92rem;margin:.2rem 0 .5rem}
+.pc{list-style:none;padding:0;margin:0;font-size:.9rem}
+.pc li{padding-left:1.1rem;position:relative;margin:.2rem 0}
+.pc li.p::before{content:"+";position:absolute;left:0;color:var(--ok);font-weight:700}
+.pc li.c::before{content:"−";position:absolute;left:0;color:var(--priv);font-weight:700}
+.advice{margin:.9rem 0 0;padding:.6rem .8rem;background:var(--ok-soft);border-radius:5px;font-size:.95rem;max-width:none}
+.advice b{color:var(--ok)}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:.6rem .9rem;border-radius:0 5px 5px 0;margin:1rem 0;max-width:none}
+.principle{font:600 1.1rem/1.4 var(--f-display);border-left:3px solid var(--accent);padding:.3rem 0 .3rem .9rem;margin:1.2rem 0}
+
+.timeline{display:grid;gap:0;margin:1rem 0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.timeline>div{display:grid;grid-template-columns:7.5rem minmax(0,1fr);gap:1rem;padding:.7rem .9rem;border-bottom:1px solid var(--line)}
+.timeline>div:last-child{border-bottom:0}
+.timeline .when{font:600 .85rem/1.5 var(--f-mono);color:var(--accent)}
+.timeline ul{margin:.1rem 0;padding-left:1.1rem}
+@media (max-width:560px){.timeline>div{grid-template-columns:minmax(0,1fr);gap:.2rem}h1{font-size:1.8rem}}
+.tracks{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.8rem;margin:1rem 0}
+.track{border:1px solid var(--line);border-radius:6px;padding:.8rem .9rem;background:var(--surface);min-width:0}
+.track h4{margin:0 0 .3rem;font:600 1rem/1.3 var(--f-display)}
+.track ul{margin:.2rem 0;padding-left:1.1rem;font-size:.93rem}
+.src{font-size:.9rem}
+.src li{overflow-wrap:anywhere}
+footer{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.88rem}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Inhoud">
+  <a href="#samenvatting">Samenvatting</a>
+  <a href="#scope">Scope en scenario's</a>
+  <a href="#design">Design</a>
+  <a href="#flow">JIT-flow</a>
+  <a href="#keuzes">Keuzes</a>
+  <a href="#testdata">Testdata en apps</a>
+  <a href="#azure">Azure-inrichting</a>
+  <a href="#reset">Reset en herstel</a>
+  <a href="#voorbereiding">Voorbereiding</a>
+  <a href="#draaiboek">Draaiboek hackathon</a>
+  <a href="#risicos">Risico's</a>
+  <a href="#vragen">Open vragen</a>
+  <a href="#bronnen">Bronnen</a>
+</nav>
+
+<main>
+<header class="top">
+  <div class="eyebrow">IAM Hackathon · Just-in-Time Access</div>
+  <h1>JIT Hackathon Blauwdruk</h1>
+  <p class="lede">Plan en design voor een halve dag bouwen aan Just-in-Time toegang, normaal en privileged, met Corteza als voordeur, midPoint als register en authentik en Microsoft Entra als doelsystemen. De omgeving staat vooraf klaar in Azure en is per component binnen een paar minuten terug te zetten.</p>
+  <div class="meta"><span>Status <b>concept v0.4</b></span><span>Team <b>3 personen</b></span><span>Hackathon <b>vr 9 okt 2026, 13:00</b></span><span>Opbouw <b>za 3 – zo 4 okt</b></span><span>Domein <b>jit.techeddie.dev</b></span><span>Regio <b>Sweden Central</b></span><span>Open <b>K9</b></span></div>
+</header>
+
+<section id="samenvatting">
+<h2>Samenvatting</h2>
+<div class="summary">
+  <div><h4>Wat we bouwen</h4><p>Een aanvraagportaal in Corteza waar je tijdelijke toegang aanvraagt, met goedkeuring en automatische intrekking na afloop. Zes voorbeeldrechten over drie IdP-scenario's.</p></div>
+  <div><h4>Taakverdeling tools</h4><p>Corteza: portaal en goedkeuring. midPoint: identiteiten, catalogus, register van alle grants, en uitvoerder waar een bestaande connector is. Waar die ontbreekt (authentik, PIM) roept Corteza de API aan. IdP's: afdwingen.</p></div>
+  <div><h4>Waar het draait</h4><p>Eén Azure VM met Docker Compose achter Traefik, per dienst een eigen hostnaam onder <code>jit.techeddie.dev</code> met geldige TLS, bereikbaar vanaf de drie laptops voor GUI én API. Publiek met IP-allowlist.</p></div>
+  <div><h4>Terugzetten</h4><p>Golden database-dumps per component plus een reset-script. Eerst werk exporteren met <code>save-work.sh</code>, dan <code>reset.sh &lt;component&gt;</code>.</p></div>
+</div>
+<p class="principle">Voorbereiding = leidingwerk, hackathon = logica. In het weekend komt alles te staan en bewijzen we dat elke koppeling werkt. Op 9 oktober bouwen we alleen nog de JIT-flows, rollen en policies.</p>
+<p class="note"><b>Besloten (K1): midPoint voert uit waar het kan.</b> midPoint registreert elke grant en voert uit voor Entra zonder P2 via de bestaande connector. Corteza roept voor authentik en PIM zelf de API aan. De authentik-connector is een spoor op de hackathon, met Claude Code; lukt die, dan schuift authentik alsnog naar midPoint.</p>
+</section>
+
+<section id="scope">
+<h2>Scope en scenario's</h2>
+<p>Drie IdP-scenario's, elk met één normaal en één privileged recht. Per scenario verschilt vooral de vraag <b>wie bewaakt de klok</b>: welk systeem trekt de toegang in als de tijd om is.</p>
+<div class="tbl"><table>
+<thead><tr><th>Scenario</th><th>Normaal recht</th><th>Privileged recht</th><th>Wie bewaakt de klok</th></tr></thead>
+<tbody>
+<tr><td><b>authentik</b><br><span class="t-m mono">zonder Enterprise</span></td><td>Groep <code>app-wiki-users</code> geeft toegang tot testapp <i>Team Wiki</i></td><td>Groep <code>priv-authentik-admins</code> met superuser-vlag (beheer van authentik zelf)</td><td>Corteza: revoke-workflow elke minuut. Wordt midPoint zodra de authentik-connector werkt (hackathon-spoor).</td></tr>
+<tr><td><b>Entra zonder P2</b></td><td>Groep <code>app-finance-readers</code> toegewezen aan app <i>Finance Portal</i></td><td>Role-assignable groep <code>priv-entra-helpdesk-admins</code> met rol Helpdesk Administrator (P1)</td><td>midPoint: assignment met <code>validTo</code>, MS Graph-connector haalt lid weg</td></tr>
+<tr><td><b>Entra met P2</b><br><span class="mono">PIM for Groups</span></td><td>PIM-groep <code>pim-app-hr-editors</code> toegewezen aan app <i>HR Portal</i></td><td>Role-assignable PIM-groep <code>pim-entra-user-admins</code> met rol User Administrator</td><td>Entra PIM: de eligibility krijgt een einddatum en elke activatie een maximale duur. midPoint registreert alleen.</td></tr>
+</tbody></table></div>
+
+<h3>Normaal versus privileged</h3>
+<div class="tbl"><table>
+<thead><tr><th></th><th><span class="chip c-norm">Normaal</span></th><th><span class="chip c-priv">Privileged</span></th></tr></thead>
+<tbody>
+<tr><td>Goedkeuring</td><td>Manager, of automatisch voor laag risico</td><td>Resource owner, optioneel tweede goedkeurder (security). Aanvrager mag nooit zelf goedkeuren.</td></tr>
+<tr><td>Maximale duur</td><td>8 uur tot enkele dagen (demo: 10 min)</td><td>1 tot 4 uur (demo: 5 min, het PIM-minimum)</td></tr>
+<tr><td>Verplichte velden</td><td>Reden</td><td>Reden en ticketnummer</td></tr>
+<tr><td>Bij activatie</td><td>Niets extra</td><td>Step-up MFA (PIM: MFA bij activatie; authentik: MFA-stage in de flow van de admin-app)</td></tr>
+<tr><td>Bij afloop</td><td>Groepslidmaatschap weg</td><td>Groepslidmaatschap weg én sessies intrekken</td></tr>
+</tbody></table></div>
+
+<h3>Buiten scope</h3>
+<ul>
+<li>Productiedata of een productietenant. Alles draait in een testtenant met fictieve gebruikers.</li>
+<li>Hoge beschikbaarheid, back-ups buiten de golden dumps, hardening voorbij IP-allowlist en sterke wachtwoorden.</li>
+<li>Aparte admin-accounts per persoon (goed idee voor privileged, maar kost tijd; eventueel stretch goal).</li>
+<li>Access reviews en certificering.</li>
+</ul>
+<p class="note">authentik heeft zelf een functie om toegang tot applicaties en entitlements aan te vragen, maar die zit in de Enterprise-editie. Zonder licentie bouwen we dit dus zelf, wat precies het punt van dit scenario is.</p>
+</section>
+
+<section id="design">
+<h2>Design</h2>
+<div class="diagram" role="img" aria-label="Architectuur: laptops via HTTPS naar Traefik op een Azure VM, met Corteza, midPoint en authentik; Corteza roept midPoint, authentik en de PIM-API aan; midPoint stuurt Entra-groepen aan via de Graph API; een midPoint-connector naar authentik is optioneel.">
+<svg viewBox="0 0 900 470" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk2"/></marker>
+  </defs>
+  <!-- laptops -->
+  <rect x="14" y="150" width="152" height="176" rx="6" class="bx"/>
+  <text x="28" y="174" class="t-b">Teamlaptops</text>
+  <text x="28" y="200" class="t-s">Browser (GUI's)</text>
+  <text x="28" y="224" class="t-s">Postman</text>
+  <text x="28" y="248" class="t-s">Claude Code, Codex</text>
+  <text x="28" y="272" class="t-s">az · pwsh · curl</text>
+  <text x="28" y="306" class="t-m">kantoor-IP + thuis-IP's</text>
+  <text x="18" y="128" class="t-m">HTTPS 443</text>
+  <text x="18" y="142" class="t-m">GUI + API</text>
+  <path d="M166,190 H188 V123 H230" class="ar" marker-end="url(#a1)"/>
+  <!-- azure rg -->
+  <rect x="200" y="16" width="462" height="438" rx="8" class="rg"/>
+  <text x="214" y="38" class="t-h">AZURE · rg-jit-hackathon · Sweden Central</text>
+  <text x="214" y="56" class="t-m">NSG: 443 (en 22) alleen vanaf team-IP's</text>
+  <rect x="216" y="68" width="430" height="370" rx="6" class="bx2"/>
+  <text x="230" y="90" class="t-h">VM · Ubuntu 24.04 · Docker Compose</text>
+  <rect x="232" y="102" width="398" height="36" rx="4" class="bx"/>
+  <text x="431" y="125" text-anchor="middle" style="font-size:12.5px">Traefik · TLS *.jit.techeddie.dev (Let's Encrypt)</text>
+  <!-- corteza -> authentik over top -->
+  <path d="M287,168 V152 H578 V166" class="ar" marker-end="url(#a1)"/>
+  <text x="433" y="148" text-anchor="middle" class="t-m">API-calls + OIDC-login portaal</text>
+  <!-- services -->
+  <rect x="232" y="168" width="112" height="96" rx="5" class="svc"/>
+  <text x="244" y="192" class="t-b">Corteza</text>
+  <text x="244" y="212" class="t-s">aanvragen,</text>
+  <text x="244" y="226" class="t-s">goedkeuren</text>
+  <text x="244" y="252" class="t-m">portal.jit…</text>
+  <rect x="375" y="168" width="112" height="96" rx="5" class="svc"/>
+  <text x="387" y="192" class="t-b">midPoint</text>
+  <text x="387" y="212" class="t-s">register,</text>
+  <text x="387" y="226" class="t-s">Entra-groepen</text>
+  <text x="387" y="252" class="t-m">midpoint.jit…</text>
+  <rect x="518" y="168" width="112" height="96" rx="5" class="svc"/>
+  <text x="530" y="192" class="t-b">authentik</text>
+  <text x="530" y="212" class="t-s">IdP, SSO,</text>
+  <text x="530" y="226" class="t-s">proxy-outpost</text>
+  <text x="530" y="252" class="t-m">auth.jit…</text>
+  <path d="M344,206 H373" class="ar" marker-end="url(#a1)"/>
+  <text x="359" y="196" text-anchor="middle" class="t-m">REST</text>
+  <path d="M487,206 H516" class="ar" stroke-dasharray="4 3" marker-end="url(#a1)"/>
+  <text x="502" y="196" text-anchor="middle" class="t-m">conn.?</text>
+  <!-- postgres -->
+  <rect x="232" y="276" width="112" height="28" rx="4" class="bx"/><text x="288" y="294" text-anchor="middle" class="t-m">PostgreSQL</text>
+  <rect x="375" y="276" width="112" height="28" rx="4" class="bx"/><text x="431" y="294" text-anchor="middle" class="t-m">PostgreSQL</text>
+  <rect x="518" y="276" width="112" height="28" rx="4" class="bx"/><text x="574" y="294" text-anchor="middle" class="t-m">PostgreSQL</text>
+  <!-- test apps + reset -->
+  <rect x="232" y="322" width="398" height="46" rx="4" class="bx"/>
+  <text x="246" y="341" style="font-size:12.5px;font-weight:600">Testapps</text>
+  <text x="246" y="358" class="t-s">Team Wiki (whoami + authentik-proxy) · Dozzle-logs</text>
+  <rect x="232" y="380" width="398" height="44" rx="4" class="bx"/>
+  <text x="246" y="399" style="font-size:12.5px;font-weight:600">Beheer</text>
+  <text x="246" y="415" class="t-m">reset.sh · save-work.sh · golden dumps · allow-my-ip.sh</text>
+  <!-- egress to entra -->
+  <path d="M646,216 H716" class="ar2" marker-end="url(#a2)"/>
+  <text x="681" y="236" text-anchor="middle" class="t-m">Graph</text>
+  <text x="681" y="249" text-anchor="middle" class="t-m">API</text>
+  <!-- entra -->
+  <rect x="718" y="96" width="168" height="262" rx="6" class="ext"/>
+  <text x="732" y="120" class="t-b">Microsoft Entra</text>
+  <text x="732" y="137" class="t-m">testtenant · techeddie.dev</text>
+  <text x="732" y="168" class="t-s">Gebruikers en groepen</text>
+  <text x="732" y="192" class="t-s">Apps: Finance, HR</text>
+  <text x="732" y="216" class="t-s">PIM for Groups (P2)</text>
+  <text x="732" y="240" class="t-s">Entra-rollen via</text>
+  <text x="732" y="256" class="t-m">role-assignable groep</text>
+  <text x="732" y="290" class="t-s">Aanroepers:</text>
+  <text x="732" y="308" class="t-m">midPoint: MS Graph-conn.</text>
+  <text x="732" y="324" class="t-m">Corteza: PIM-requests</text>
+</svg>
+</div>
+
+<h3>Rol per component</h3>
+<div class="tbl"><table>
+<thead><tr><th>Component</th><th>Rol in de JIT-oplossing</th><th>Wat het níet doet</th></tr></thead>
+<tbody>
+<tr><td><b>Corteza</b> <span class="mono">2024.9.x</span></td><td>Aanvraagportaal (Compose-namespace <i>JIT</i>) en goedkeuringsstappen. Registreert elke grant in midPoint. Roept zelf de authentik-API (toekennen, intrekken, sessies) en de PIM-API (eligibility) aan. Revoke-workflow voor authentik. Inloggen via authentik (OIDC).</td><td>Bron van waarheid voor identiteiten of rechten.</td></tr>
+<tr><td><b>midPoint</b> <span class="mono">4.10.x</span></td><td>Identiteiten (uit een HR-CSV), catalogus als rollen, wie mag wat aanvragen, grants als assignment met <code>validTo</code>. Provisioning en intrekking van Entra-groepen via de bestaande MS Graph-connector; validity scanner trekt verlopen assignments in, reconciliatie herstelt handmatige wijzigingen. authentik-connector als hackathon-spoor.</td><td>Aanvraag- en goedkeuringsschermen (dat doet Corteza).</td></tr>
+<tr><td><b>authentik</b> <span class="mono">2026.x</span></td><td>IdP voor testapp en Corteza-login. Groepen bepalen toegang via policy bindings. Zonder Enterprise: geen eigen request-functie, geen scheduled offboarding.</td><td>Tijdgebonden lidmaatschap (bestaat niet in de open-source editie).</td></tr>
+<tr><td><b>Entra</b></td><td>Doelsysteem voor twee scenario's. Zonder P2: gewone groepen, midPoint bewaakt de klok. Met P2: PIM for Groups met eigen expiratie van eligibility en activatie, MFA bij activatie en audit.</td><td>Aanvraagportaal (My Access/Entitlement Management valt buiten dit experiment).</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="flow">
+<h2>JIT-flow</h2>
+<p>Eén generieke flow. Alleen de uitvoerder in stap 6 en 7 verschilt per doelsysteem.</p>
+<ol class="flow">
+<li><div><span class="who">Aanvrager</span><br>Logt in op het portaal via authentik en kiest een recht uit de catalogus, met duur, reden en (bij privileged) ticketnummer.</div></li>
+<li><div><span class="who">Corteza → midPoint</span><br>Controleert of de aanvrager dit recht mag aanvragen (eligibility, maximale duur, actief account).</div></li>
+<li><div><span class="who">Corteza</span><br>Bepaalt goedkeurders: manager bij normaal, resource owner (plus eventueel security) bij privileged. Aanvrager als goedkeurder wordt geweigerd.</div></li>
+<li><div><span class="who">Goedkeurder</span><br>Keurt goed of af in het portaal. Afwijzing sluit de aanvraag met reden.</div></li>
+<li><div><span class="who">Corteza → midPoint</span><br>Registreert de grant als assignment met <code>validTo = nu + duur</code> en het aanvraagnummer in de beschrijving. Zo staat elke grant op één plek, ook als midPoint hem niet zelf uitvoert.</div></li>
+<li><div><span class="who">Uitvoering</span><br><b>Entra zonder P2:</b> midPoint (MS Graph-connector) voegt lid toe. <b>authentik:</b> Corteza roept <code>add_user</code> aan. <b>Entra met P2:</b> Corteza maakt de gebruiker eligible met einddatum; de gebruiker activeert zelf in PIM met MFA en reden.</div></li>
+<li><div><span class="who">Afloop</span><br><b>Entra zonder P2:</b> validity scanner, midPoint haalt het lid weg. <b>authentik:</b> Corteza-revoke-workflow haalt het lid weg en verwijdert bij privileged de sessies. <b>Entra met P2:</b> PIM laat eligibility en activatie zelf verlopen. De midPoint-assignment verloopt in alle gevallen op hetzelfde moment, zodat het register klopt.</div></li>
+</ol>
+
+<h3>API-spiekbriefje</h3>
+<p>Probeer elke call eerst in Postman of met Claude Code voordat hij in een Corteza-workflow gaat.</p>
+<pre><code># Corteza → midPoint: grant aanmaken (PATCH /midpoint/ws/rest/users/{oid})
+{"objectModification":{"itemDelta":{"modificationType":"add","path":"assignment",
+  "value":{"targetRef":{"oid":"&lt;role-oid&gt;","type":"RoleType"},
+           "activation":{"validTo":"2026-10-15T14:05:00Z"},
+           "description":"JIT REQ-0042"}}}}
+
+# Corteza → authentik: lid toevoegen / verwijderen (later eventueel via midPoint-connector)
+POST /api/v3/core/groups/{group_uuid}/add_user/      {"pk": &lt;user_pk&gt;}
+POST /api/v3/core/groups/{group_uuid}/remove_user/   {"pk": &lt;user_pk&gt;}
+GET  /api/v3/core/authenticated_sessions/?user__username=anna.jansen   → DELETE per sessie
+
+# MS Graph-connector (Entra zonder P2): dit doet de bestaande connector al
+POST   /v1.0/groups/{id}/members/$ref    {"@odata.id":"https://graph.microsoft.com/v1.0/directoryObjects/{userId}"}
+DELETE /v1.0/groups/{id}/members/{userId}/$ref
+
+# Corteza → PIM for Groups (Entra met P2)
+POST /v1.0/identityGovernance/privilegedAccess/group/eligibilityScheduleRequests   (P-b: eligible maken, advies)
+POST /v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests    (P-a: direct actief, variant)
+{"accessId":"member","principalId":"&lt;user&gt;","groupId":"&lt;group&gt;","action":"adminAssign",
+ "justification":"REQ-0042","scheduleInfo":{"startDateTime":"2026-10-15T13:05:00Z",
+ "expiration":{"type":"afterDuration","duration":"PT1H"}}}</code></pre>
+<p>Gebruik overal UTC in ISO 8601. Als de hackathon na 25 oktober valt, verschuift de Nederlandse offset van +02:00 naar +01:00; met UTC heb je daar geen last van.</p>
+</section>
+
+<section id="keuzes">
+<h2>Keuzes</h2>
+<p>Per keuze de opties met voor- en nadelen. Het groen omlijnde blok is mijn advies; de keuze is aan jullie.</p>
+
+<div class="decision" id="k1">
+<h3>K1 · Wie voert de JIT-grant uit? <span class="chip c-ok">besloten: O2 waar het kan</span></h3>
+<p class="q">Eerder gekozen: O2. Nieuwe feiten: opbouw in één weekend, hackathon op 9 oktober, geen ervaring met ConnId, Java of Groovy, veel code via Claude Code.</p>
+<div class="opts">
+  <div class="opt"><h4>O2 · midPoint voert alles uit (eerdere keuze)</h4><p>Vóór 9 oktober twee connectoren bouwen: authentik en PIM for Groups.</p>
+  <ul class="pc"><li class="p">IGA-zuiver: één klok, audit, reconciliatie op alle doelsystemen</li><li class="c">Connectorwerk komt bovenop een weekend dat al vol zit met infrastructuur</li><li class="c">Zonder ConnId-ervaring is debuggen in midPoint (classloading, schema, foutmeldingen) traag, ook met Claude Code</li><li class="c">Mislukt het, dan heb je op de dag geen werkende basis</li></ul></div>
+  <div class="opt rec"><h4>O2 waar het kan <span class="chip c-ok">gekozen</span></h4><p>midPoint registreert alle grants en voert uit voor Entra zonder P2 (bestaande connector). Corteza roept authentik en PIM direct aan. De authentik-connector is een hackathon-spoor.</p>
+  <ul class="pc"><li class="p">Past in het weekend; alle koppelingen zijn vooraf te testen</li><li class="p">De IGA-ambitie blijft: één spoor bouwt op de dag de authentik-connector met Claude Code, met een werkende terugval</li><li class="p">PIM bewaakt met P-b zelf de klok; een eigen PIM-connector voegt dan weinig toe</li><li class="c">authentik mist reconciliatie totdat de connector werkt</li></ul></div>
+  <div class="opt"><h4>O1 · Corteza doet alles</h4><p>midPoint alleen als catalogus.</p>
+  <ul class="pc"><li class="p">Minste werk</li><li class="c">midPoint doet vrijwel niets; weinig leerwaarde voor IGA</li></ul></div>
+</div>
+<p class="advice"><b>Besloten: O2 waar het kan</b> (bevestigd 30 september, na de eerdere keuze voor volledig O2).</p>
+</div>
+
+<div class="decision" id="k2">
+<h3>K2 · De authentik-connector als hackathon-spoor <span class="chip c-ok">voorstel</span></h3>
+<p class="q">Eén teamlid bouwt op 9 oktober met Claude Code een midPoint-connector voor authentik: groepen en leden lezen, lid toevoegen en verwijderen. De rest van het team werkt met de Corteza-terugval, dus de demo hangt er niet van af.</p>
+<div class="opts">
+  <div class="opt rec"><h4>C1 · ConnDev (Groovy/YAML) <span class="chip c-ok">advies</span></h4><p>Evolveums low-code framework. Objectklassen en operaties in Groovy en YAML; draait als gewone ConnId-bundle.</p>
+  <ul class="pc"><li class="p">Weinig code; Groovy en YAML zijn voor Claude Code goed te schrijven en te lezen</li><li class="p">Het framework heeft een flinke historie (ruim 300 commits) en er zijn SCIM-, REST- en SQL-connectoren op gebouwd</li><li class="c">Geen releaseversie of minimale midPoint-versie gevonden; compatibiliteit met 4.10 blijkt pas bij proberen</li></ul></div>
+  <div class="opt"><h4>C2 · Java-connector op Polygon</h4><p>Klassieke ConnId-connector met Maven.</p>
+  <ul class="pc"><li class="p">Beproefd, veel voorbeelden (o.a. de MS Graph-connector)</li><li class="c">Meer code en build-tooling; zonder Java-ervaring lastig te beoordelen wat Claude Code maakt</li></ul></div>
+</div>
+<p class="advice"><b>Advies: C1</b>, met een voorbereiding van een uur in de week ervoor: ConnDev lokaal bouwen en een lege bundle in de midPoint-container laten laden. Lukt zelfs dat niet, dan valt dit spoor af en schuift die persoon naar spoor 3.</p>
+</div>
+
+<div class="decision" id="k3">
+<h3>K3 · Welk PIM-patroon voor Entra met P2? <span class="chip c-ok">besloten: P-b</span></h3>
+<div class="opts">
+  <div class="opt"><h4>P-a · Aanvraag = actieve toewijzing</h4><p>Na goedkeuring een actieve, tijdgebonden toewijzing (<code>assignmentScheduleRequests</code>).</p>
+  <ul class="pc"><li class="p">Zelfde gebruikerservaring als de andere scenario's</li><li class="c">Omzeilt de PIM-activatie: geen MFA bij activatie</li></ul></div>
+  <div class="opt rec"><h4>P-b · Eligibility, activatie in PIM <span class="chip c-ok">gekozen</span></h4><p>Na goedkeuring maakt Corteza de gebruiker eligible met een einddatum (<code>eligibilityScheduleRequests</code>). De gebruiker activeert zelf in PIM met MFA en reden.</p>
+  <ul class="pc"><li class="p">IGA bepaalt wie mag, PIM regelt het moment</li><li class="p">PIM bewaakt beide klokken zelf; midPoint registreert</li><li class="c">Gebruiker werkt in twee portalen</li></ul></div>
+</div>
+<p class="advice"><b>Besloten: P-b.</b> P-a is dezelfde Corteza-stap met een ander endpoint; bouw hem als variant als er op de dag tijd over is.</p>
+</div>
+
+<div class="decision" id="k4">
+<h3>K4 · Hosting in Azure <span class="chip c-ok">H1 · Sweden Central</span></h3>
+<div class="opts">
+  <div class="opt rec"><h4>H1 · Eén VM met Docker Compose <span class="chip c-ok">advies</span></h4><p>Ubuntu 24.04, Standard_D8s_v5 (8 vCPU, 32 GiB), alle containers op één host.</p>
+  <ul class="pc"><li class="p">Simpel, goedkoop, snel te resetten met dumps</li><li class="p">Dezelfde Compose draait als plan B lokaal op een laptop</li><li class="p">Eén plek voor alle logs</li><li class="c">Single point of failure</li><li class="c">Patchen en beheer handmatig</li></ul></div>
+  <div class="opt"><h4>H2 · Container Apps + PostgreSQL Flexible</h4><p>Managed containers en databases, ingebouwde TLS en IP-restricties.</p>
+  <ul class="pc"><li class="p">Weinig serverbeheer</li><li class="c">Persistente config van midPoint en authentik is lastiger</li><li class="c">Reset via database-restore is traag (PITR maakt een nieuwe server)</li><li class="c">Meer onderdelen, meer voorbereidingstijd</li></ul></div>
+  <div class="opt"><h4>H3 · AKS</h4><p>Kubernetes-cluster met Helm-charts.</p>
+  <ul class="pc"><li class="p">Schaalbaar en herbruikbaar richting productie</li><li class="c">Te zwaar voor een halve dag met drie personen</li></ul></div>
+</div>
+<p class="advice"><b>Advies: H1.</b> D4s_v5 (16 GiB) kan waarschijnlijk ook, maar midPoint, authentik en drie databases samen maken 32 GiB een veilige keuze voor een dag. Zet auto-shutdown aan. Check vooraf of de images arm64 ondersteunen als plan B een Mac is. Regio: Sweden Central, op jullie verzoek vanwege beschikbaarheid en prijs; de extra latency vanaf Nederland (enkele tientallen milliseconden) merk je in GUI's en API-calls niet.</p>
+</div>
+
+<div class="decision" id="k5">
+<h3>K5 · Toegang vanaf de laptops <span class="chip c-ok">besloten: T1</span></h3>
+<p class="q">Hackathon op kantoor én op afstand: de allowlist bevat het kantoor-IP plus de thuis-IP's. Ieder teamlid krijgt Network Contributor op de resourcegroep, zodat <code>allow-my-ip.sh</code> voor iedereen werkt.</p>
+<p class="q">GUI's en API's moeten werken vanuit browser, Postman en AI-tools op de laptop.</p>
+<div class="opts">
+  <div class="opt rec"><h4>T1 · Publiek + IP-allowlist <span class="chip c-ok">advies</span></h4><p>Publiek IP, NSG laat 443 alleen toe vanaf de team-IP's. Script <code>allow-my-ip.sh</code> voegt je huidige IP toe.</p>
+  <ul class="pc"><li class="p">Niets te installeren op laptops, werkt met elke tool</li><li class="p">Echte hostnamen en certificaten, dus OIDC-redirects werken gewoon</li><li class="c">Wisselend IP (hotspot, thuis) vraagt een extra stap</li><li class="c">Beheerinterfaces staan op internet, alleen afgeschermd door IP en wachtwoord</li></ul></div>
+  <div class="opt"><h4>T2 · Tailscale</h4><p>VM in een tailnet, geen publieke poorten. Laptops met Tailscale-client.</p>
+  <ul class="pc"><li class="p">Niets publiek, IP-onafhankelijk</li><li class="c">Client nodig op laptops; op beheerde werkplekken vaak niet toegestaan</li><li class="c">Meerdere hostnamen per VM kost extra configuratie</li></ul></div>
+  <div class="opt"><h4>T3 · VPN Gateway (P2S) of Bastion</h4><p>Azure-native private toegang.</p>
+  <ul class="pc"><li class="p">Geen publieke endpoints</li><li class="c">Gateway is traag uit te rollen en kost meer</li><li class="c">Bastion is voor SSH/RDP, niet voor API-verkeer vanaf de laptop</li></ul></div>
+</div>
+<p class="advice"><b>Advies: T1</b>, tenzij jullie laptops Tailscale mogen draaien. Let op: cloud-agents (Claude Code op het web, Codex cloud) komen vanaf andere IP's en kunnen er bij T1 en T2 niet bij. De CLI-varianten op de laptop wel.</p>
+</div>
+
+<div class="decision" id="k6">
+<h3>K6 · Entra-tenant(s) <span class="chip c-ok">besloten: E1</span></h3>
+<div class="opts">
+  <div class="opt rec"><h4>E1 · Eén testtenant met P2-trial <span class="chip c-ok">advies</span></h4><p>Scenario "zonder P2" gebruikt gewone groepen en geen PIM-functies.</p>
+  <ul class="pc"><li class="p">Eén seed-script, één set app-registraties</li><li class="p">Functioneel gelijk aan zonder P2, want die flow gebruikt alleen gratis Graph-functies</li><li class="c">Geen echte licentiegrens; iemand kan per ongeluk een P2-functie gebruiken</li></ul></div>
+  <div class="opt"><h4>E2 · Twee testtenants</h4><p>Eén zonder en één met P2-trial.</p>
+  <ul class="pc"><li class="p">Licentiegrens is echt</li><li class="c">Dubbel seedwerk, dubbele service principals en secrets</li></ul></div>
+  <div class="opt"><h4>E3 · Bestaande (bedrijfs)tenant</h4><p>Werken in een tenant die al gebruikt wordt.</p>
+  <ul class="pc"><li class="p">Geen nieuwe tenant nodig</li><li class="c">Service principals krijgen rechten als <code>RoleManagement.ReadWrite.Directory</code>; daarmee kun je in de praktijk de tenant overnemen</li><li class="c">Afgeraden</li></ul></div>
+</div>
+<p class="advice"><b>Advies: E1.</b> De P2-trial loopt 30 dagen. Activeer hem ongeveer twee weken voor de hackathon, zodat hij de dry-run en de dag zelf dekt. Elke gebruiker die eligible wordt in PIM for Groups heeft een P2-licentie nodig; wijs die toe aan de testgebruikers in dat scenario.</p>
+</div>
+
+<div class="decision" id="k7">
+<h3>K7 · Resetstrategie <span class="chip c-ok">voorstel R1+R2+R3</span></h3>
+<div class="opts">
+  <div class="opt rec"><h4>R1 · Golden dumps per component <span class="chip c-ok">advies</span></h4><p>Na het seeden per component een <code>pg_dump</code> plus volume-archief. <code>reset.sh authentik</code> zet alleen authentik terug.</p>
+  <ul class="pc"><li class="p">Terug binnen een paar minuten, alleen het kapotte deel</li><li class="p">Bevat ook handmatige GUI-configuratie uit de voorbereiding</li><li class="c">Dumps verversen na elke wijziging in de voorbereiding</li></ul></div>
+  <div class="opt"><h4>R2 · Opnieuw opbouwen vanuit code</h4><p><code>docker compose down -v</code>, dan opnieuw seeden met blueprints, post-initial-objects en imports.</p>
+  <ul class="pc"><li class="p">Volledig reproduceerbaar</li><li class="c">Trager (midPoint eerste start duurt minuten)</li><li class="c">Alleen zo goed als de seed compleet is</li></ul></div>
+  <div class="opt"><h4>R3 · Azure disk-snapshot</h4><p>Snapshot van de VM-schijf, terugzetten via een nieuwe schijf.</p>
+  <ul class="pc"><li class="p">Vangnet als alles kapot is</li><li class="c">Zet alles terug, voor iedereen</li><li class="c">Dekt Entra niet</li></ul></div>
+</div>
+<p class="advice"><b>Advies: combineer.</b> R1 voor de dag zelf, R2 als bron waaruit de dumps gemaakt worden, R3 als vangnet op de ochtend van de hackathon. Entra krijgt een eigen reset-script (zie <a href="#reset">Reset en herstel</a>).</p>
+</div>
+<div class="decision" id="k8">
+<h3>K8 · Certificaten voor jit.techeddie.dev <span class="chip c-ok">besloten: T-b</span></h3>
+<p class="q">Domein besloten: <code>jit.techeddie.dev</code>, DNS bij Cloudflare. In alle varianten staat het record op <i>DNS only</i> (grijze wolk): via de Cloudflare-proxy ziet de NSG Cloudflare-IP's in plaats van jullie eigen IP's en werkt de allowlist niet, en het gratis Cloudflare-certificaat dekt geen tweede niveau zoals <code>auth.jit.techeddie.dev</code>.</p>
+<div class="opts">
+  <div class="opt rec"><h4>T-b · <code>jit</code> delegeren naar Azure DNS <span class="chip c-ok">gekozen</span></h4><p>Vier NS-records voor <code>jit</code> in Cloudflare, naar een Azure DNS-zone uit Bicep. Traefik haalt een wildcard-certificaat via DNS-01 met de managed identity van de VM.</p>
+  <ul class="pc"><li class="p">Geen sleutel van je hoofddomein op de VM; schade beperkt tot het subdomein</li><li class="p">A-records staan in Bicep en volgen het IP vanzelf</li><li class="c">Iets meer werk: zone, rol-toewijzing, NS-records</li></ul></div>
+  <div class="opt"><h4>T-a · Cloudflare-token op de VM</h4><p>Wildcard-record in Cloudflare, Traefik met de Cloudflare DNS-provider.</p>
+  <ul class="pc"><li class="p">Snelst op te zetten</li><li class="c">Een token kan niet tot een subdomein beperkt worden, alleen tot de hele zone <code>techeddie.dev</code></li><li class="p">Wel te beperken tot het IP van de VM en tot een einddatum (bv. 16 oktober)</li></ul></div>
+  <div class="opt"><h4>T-c · Eén keer vanaf je laptop</h4><p>Wildcard-certificaat met <code>lego</code> en een Cloudflare-token op je laptop, bestand naar de VM.</p>
+  <ul class="pc"><li class="p">Geen DNS-sleutel op de VM</li><li class="c">Handwerk; het certificaat moet elke rebuild overleven</li></ul></div>
+</div>
+<p class="advice"><b>Besloten: T-b.</b> Volgorde: eerst de Azure DNS-zone uit Bicep, dan de vier NS-records die Azure teruggeeft als NS-records voor <code>jit</code> in Cloudflare. Controle: <code>dig NS jit.techeddie.dev +short</code> geeft de Azure-nameservers.</p>
+</div>
+<div class="decision" id="k9">
+<h3>K9 · Privileged recht in het scenario zonder P2 <span class="chip c-open">open</span></h3>
+<p class="q">ENT-04 was Contributor op een sandbox-resourcegroep. Dat werkt alleen als die resourcegroep in een Azure-subscriptie zit die aan de <b>nieuwe testtenant</b> hangt. Jullie bestaande subscriptie hoort bij een andere tenant, en een subscriptie naar een andere tenant verhuizen wist al haar roltoewijzingen. Dat wil je niet met de subscriptie waar de VM in draait.</p>
+<div class="opts">
+  <div class="opt"><h4>S1 · Azure RBAC in een extra subscriptie</h4><p>Nieuwe pay-as-you-go-subscriptie in de testtenant, alleen voor <code>rg-jit-sandbox</code>.</p>
+  <ul class="pc"><li class="p">Privileged toegang tot Azure-resources, herkenbaar voor iedereen</li><li class="c">Betaalmethode en een extra subscriptie nodig; kost tijd in een al vol weekend</li><li class="c">RBAC-wijzigingen worden met vertraging zichtbaar</li></ul></div>
+  <div class="opt rec"><h4>S2 · Entra-rol via role-assignable groep <span class="chip c-ok">advies</span></h4><p>Groep <code>priv-entra-helpdesk-admins</code> (role-assignable) met de rol Helpdesk Administrator. midPoint beheert het tijdelijke lidmaatschap.</p>
+  <ul class="pc"><li class="p">Geen extra subscriptie; alles blijft in Entra</li><li class="p">Mooie vergelijking met ENT-06: een beheerrol tijdelijk via IGA versus via PIM</li><li class="p">Realistisch: veel organisaties hebben P1 maar geen P2</li><li class="c">Vraagt P1 (zit in de P2-trial) en <code>RoleManagement.ReadWrite.Directory</code> voor de midPoint-connector</li></ul></div>
+  <div class="opt"><h4>S3 · App-rol "Admin" in Finance Portal</h4><p>Groep toegewezen aan een app-rol; zichtbaar als <code>roles</code>-claim in het token.</p>
+  <ul class="pc"><li class="p">Licentievrij en het lichtst</li><li class="c">Voelt minder privileged; alleen zichtbaar in een token</li></ul></div>
+</div>
+<p class="advice"><b>Advies: S2.</b> De rest van dit document gaat hier al van uit. Test in het weekend wel of de MS Graph-connector lidmaatschap van een role-assignable groep kan wijzigen; zo niet, dan valt ENT-04 terug op S3.</p>
+</div>
+</section>
+
+<section id="testdata">
+<h2>Testdata en apps</h2>
+<p>Eén bestand <code>seed/users.csv</code> is de bron voor alle systemen. midPoint leest het als HR-bron; de seed-scripts voor authentik en Entra lezen hetzelfde bestand. Koppeling tussen systemen via <code>employeeId</code>.</p>
+<h3>Gebruikers</h3>
+<div class="tbl"><table>
+<thead><tr><th>Gebruiker</th><th>employeeId</th><th>Rol in de scenario's</th><th>Bijzonderheden</th></tr></thead>
+<tbody>
+<tr><td class="nowrap mono">anna.jansen</td><td class="mono">E1001</td><td>Medewerker, vraagt normale toegang aan</td><td>Manager: carla.bakker</td></tr>
+<tr><td class="nowrap mono">bram.devries</td><td class="mono">E1002</td><td>Engineer, vraagt privileged toegang aan</td><td>Manager: carla.bakker · P2-licentie</td></tr>
+<tr><td class="nowrap mono">carla.bakker</td><td class="mono">E1003</td><td>Manager, keurt normale aanvragen goed</td><td>Probeert ook eigen aanvraag goed te keuren (moet falen)</td></tr>
+<tr><td class="nowrap mono">dirk.visser</td><td class="mono">E1004</td><td>Resource owner platform, keurt privileged goed</td><td>P2-licentie</td></tr>
+<tr><td class="nowrap mono">eva.smit</td><td class="mono">E1005</td><td>Security officer, tweede goedkeurder en auditor</td><td>Leesrechten op grant-overzicht</td></tr>
+<tr><td class="nowrap mono">gijs.oud</td><td class="mono">E1006</td><td>Uit dienst</td><td>Gedeactiveerd; aanvraag moet geweigerd worden</td></tr>
+<tr><td class="nowrap mono">hack-*</td><td class="mono">n.v.t.</td><td>Beheerders: één per teamlid in elk systeem</td><td>Niet in users.csv; apart gebootstrapt</td></tr>
+</tbody></table></div>
+
+<h3>Catalogus (rollen in midPoint, gespiegeld in Corteza)</h3>
+<div class="tbl"><table>
+<thead><tr><th>ID</th><th>Recht</th><th>Type</th><th>Doelsysteem</th><th>Groep</th><th>Max. duur (demo)</th><th>Goedkeuring</th></tr></thead>
+<tbody>
+<tr><td class="mono">ENT-01</td><td>Team Wiki gebruiker</td><td><span class="chip c-norm">normaal</span></td><td>authentik</td><td class="mono">app-wiki-users</td><td>8 u (10 min)</td><td>Manager</td></tr>
+<tr><td class="mono">ENT-02</td><td>authentik beheerder</td><td><span class="chip c-priv">privileged</span></td><td>authentik</td><td class="mono">priv-authentik-admins</td><td>1 u (5 min)</td><td>Resource owner + security</td></tr>
+<tr><td class="mono">ENT-03</td><td>Finance Portal lezer</td><td><span class="chip c-norm">normaal</span></td><td>Entra zonder P2</td><td class="mono">app-finance-readers</td><td>8 u (10 min)</td><td>Manager</td></tr>
+<tr><td class="mono">ENT-04</td><td>Entra Helpdesk Administrator</td><td><span class="chip c-priv">privileged</span></td><td>Entra zonder P2 (role-assignable groep)</td><td class="mono">priv-entra-helpdesk-admins</td><td>2 u (5 min)</td><td>Resource owner</td></tr>
+<tr><td class="mono">ENT-05</td><td>HR Portal editor</td><td><span class="chip c-norm">normaal</span></td><td>Entra met P2 (PIM)</td><td class="mono">pim-app-hr-editors</td><td>8 u (10 min)</td><td>Manager</td></tr>
+<tr><td class="mono">ENT-06</td><td>Entra User Administrator</td><td><span class="chip c-priv">privileged</span></td><td>Entra met P2 (PIM, role-assignable)</td><td class="mono">pim-entra-user-admins</td><td>1 u (5 min)</td><td>Resource owner, MFA bij activatie</td></tr>
+</tbody></table></div>
+<p>ENT-04 en ENT-06 geven allebei een Entra-beheerrol via een role-assignable groep. Het verschil is het mechanisme: bij ENT-04 bewaakt midPoint de tijd, bij ENT-06 doet PIM dat, met MFA bij activatie. Role-assignable groepen vragen P1; dat is realistisch voor een organisatie zonder P2 (zie <a href="#k9">K9</a>).</p>
+
+<h3>Testapps</h3>
+<div class="tbl"><table>
+<thead><tr><th>App</th><th>Hoe</th><th>Zo test je het</th></tr></thead>
+<tbody>
+<tr><td>Team Wiki</td><td><code>traefik/whoami</code> achter een authentik proxy provider (embedded outpost, zit in de gratis editie). Policy binding op <code>app-wiki-users</code>.</td><td>Open <code>wiki.jit…</code>. Met toegang zie je de headers inclusief <code>X-authentik-groups</code>, zonder toegang een weigering.</td></tr>
+<tr><td>authentik admin</td><td>De beheerinterface van authentik zelf; groep met superuser-vlag.</td><td>Inloggen als bram.devries en <code>/if/admin/</code> openen.</td></tr>
+<tr><td>Finance Portal, HR Portal</td><td>App-registraties met redirect <code>https://jwt.ms</code>, <i>Assignment required</i> aan, groepen toegewezen, groups-claim aan.</td><td>Authorize-URL openen. Met toegang zie je het token met groepen, zonder toegang fout AADSTS50105.</td></tr>
+<tr><td>Helpdesk-rol</td><td>Rol Helpdesk Administrator op <code>priv-entra-helpdesk-admins</code>.</td><td>Als bram.devries in het Entra-beheercentrum het wachtwoord van anna.jansen resetten, of <code>Get-MgUserMemberOf -UserId bram.devries@…</code> voor en na afloop.</td></tr>
+</tbody></table></div>
+
+<h3>Demoscenario's (definition of done)</h3>
+<ol>
+<li>anna.jansen vraagt ENT-01 aan voor 10 minuten, carla.bakker keurt goed, Anna ziet de wiki, na 10 minuten is de toegang en de sessie weg.</li>
+<li>bram.devries vraagt ENT-04 aan voor 5 minuten met ticketnummer, dirk.visser keurt goed, bram kan als helpdeskbeheerder een wachtwoord resetten, na afloop haalt midPoint hem uit de groep.</li>
+<li>bram.devries krijgt via het portaal eligibility op ENT-06, activeert in PIM met MFA, de activatie verloopt vanzelf; na afloop van de eligibility haalt midPoint die weg.</li>
+<li>carla.bakker probeert haar eigen aanvraag goed te keuren en wordt geweigerd; gijs.oud kan niets aanvragen.</li>
+<li>eva.smit ziet alle actieve en verlopen grants in één overzicht (Corteza) en dezelfde actieve grants in midPoint.</li>
+<li>Iemand voegt anna.jansen handmatig toe aan <code>app-finance-readers</code> in Entra; na een reconciliatie heeft midPoint dat teruggedraaid (vereist een niet-tolerante groepsassociatie). Werkt de authentik-connector, dan ook voor <code>app-wiki-users</code>.</li>
+</ol>
+</section>
+
+<section id="azure">
+<h2>Azure-inrichting</h2>
+<h3>Resources</h3>
+<div class="tbl"><table>
+<thead><tr><th>Resource</th><th>Naam</th><th>Toelichting</th></tr></thead>
+<tbody>
+<tr><td>Resourcegroep</td><td class="mono">rg-jit-hackathon</td><td>Sweden Central, in de bestaande subscriptie. Alles in Bicep, zodat opruimen één delete is.</td></tr>
+<tr><td>VM</td><td class="mono">vm-jit-01</td><td>Ubuntu 24.04, D8s_v5, 128 GB Premium SSD, system-assigned managed identity, auto-shutdown 20:00.</td></tr>
+<tr><td>Publiek IP + NSG</td><td class="mono">pip-jit-01 / nsg-jit</td><td>Statisch IP. Inbound 443 (en 22) alleen vanaf kantoor- en thuis-IP's. Poort 80 dicht: certificaten via DNS-01.</td></tr>
+<tr><td>DNS-zone</td><td class="mono">jit.techeddie.dev</td><td>Bij K8 = T-b. Gedelegeerd vanuit Cloudflare met 4 NS-records; wildcard A-record <code>*</code> naar de VM. Managed identity krijgt DNS Zone Contributor voor de ACME-challenge. Bij T-a vervalt deze zone en staat <code>*.jit</code> als A-record (DNS only) in Cloudflare.</td></tr>
+<tr><td>Key Vault</td><td class="mono">kv-jit-…</td><td>Optioneel (kan vervallen als het weekend krap is). Beheerwachtwoorden, API-tokens, client secrets. Anders: <code>.env</code> op de VM plus een gedeelde kluis. Secrets nooit in git.</td></tr>
+</tbody></table></div>
+
+<h3>Hostnamen</h3>
+<div class="tbl"><table>
+<thead><tr><th>Hostnaam</th><th>Dienst</th><th>API-basis</th></tr></thead>
+<tbody>
+<tr><td class="mono">portal.jit.techeddie.dev</td><td>Corteza (webapps + API)</td><td class="mono">/api/</td></tr>
+<tr><td class="mono">midpoint.jit.techeddie.dev</td><td>midPoint</td><td class="mono">/midpoint/ws/rest/</td></tr>
+<tr><td class="mono">auth.jit.techeddie.dev</td><td>authentik</td><td class="mono">/api/v3/</td></tr>
+<tr><td class="mono">wiki.jit.techeddie.dev</td><td>Team Wiki (whoami)</td><td class="mono">n.v.t.</td></tr>
+<tr><td class="mono">logs.jit.techeddie.dev</td><td>Dozzle (containerlogs, achter authentik)</td><td class="mono">n.v.t.</td></tr>
+</tbody></table></div>
+<p>Eén hostnaam per dienst is nodig: authentik en Corteza draaien niet goed onder een subpad, en aparte hosts voorkomen cookieconflicten.</p>
+
+<h3>Service-accounts en rechten</h3>
+<div class="tbl"><table>
+<thead><tr><th>Account</th><th>Waar</th><th>Gebruikt door</th><th>Rechten</th></tr></thead>
+<tbody>
+<tr><td class="mono">sp-jit-midpoint</td><td>Entra</td><td>midPoint MS Graph-connector</td><td><code>User.ReadWrite.All</code>, <code>GroupMember.ReadWrite.All</code>, <code>Group.Read.All</code>, en voor ENT-04 (role-assignable groep) <code>RoleManagement.ReadWrite.Directory</code>. Dat laatste is in de praktijk tenant-breed beheer: alleen in de testtenant.</td></tr>
+<tr><td class="mono">sp-jit-orchestrator</td><td>Entra</td><td>Corteza (PIM-requests)</td><td><code>PrivilegedEligibilitySchedule.ReadWrite.AzureADGroup</code>, <code>PrivilegedAssignmentSchedule.ReadWrite.AzureADGroup</code> (voor P-a), <code>User.Read.All</code>. Voor role-assignable groepen mogelijk ook <code>RoleManagement.ReadWrite.Directory</code>; testen in het weekend.</td></tr>
+<tr><td class="mono">svc-corteza</td><td>midPoint</td><td>Corteza</td><td>REST-toegang: users en rollen lezen, assignments toevoegen, niets anders</td></tr>
+<tr><td class="mono">sa-jit-orchestrator</td><td>authentik</td><td>Corteza (en later de midPoint-connector)</td><td>Service account met API-token; users en groepen lezen, groepslidmaatschap en sessies beheren</td></tr>
+<tr><td class="mono">Corteza OIDC-client</td><td>authentik</td><td>Corteza-login</td><td>OAuth2/OIDC provider met redirect naar <code>portal.jit…</code></td></tr>
+</tbody></table></div>
+
+<h3>Repository</h3>
+<p>Private GitHub-repo; de twee teamgenoten als collaborator. Geen secrets in de repo, ook niet in de Postman-environments.</p>
+<pre><code>jit-hackathon-env/
+├── infra/            main.bicep (rg, vnet, nsg, pip, vm, dns, kv, rbac)
+├── compose/          docker-compose.yml, traefik/, .env.example
+├── connectors/       connector-authentik/ (hackathon-spoor, ConnDev)
+├── seed/
+│   ├── users.csv                     # één bron voor alle testgebruikers
+│   ├── authentik/blueprints/*.yaml   # users, groepen, apps, providers, policies, service account
+│   ├── midpoint/post-initial-objects/*.xml  # HR-CSV + Entra resource, rollen, svc-user, taken
+│   ├── corteza/                      # namespace-export JIT, workflow-JSON, settings
+│   └── entra/seed-entra.ps1          # idempotent: users, groepen, apps, PIM-policy, RBAC
+├── scripts/          bootstrap.sh, reset.sh, snapshot.sh, save-work.sh, allow-my-ip.sh, reset-entra.ps1
+├── postman/          collectie + environment per persoon (zonder secrets)
+├── CLAUDE.md, AGENTS.md              # endpoints, auth, conventies voor Claude Code en Codex
+└── docs/runbook.md</code></pre>
+<p>De <code>CLAUDE.md</code> en <code>AGENTS.md</code> beschrijven endpoints, hoe je een token haalt en de naamconventies, zodat Claude Code en Codex direct met de API's kunnen werken. Tokens gaan via omgevingsvariabelen, gedeeld via een wachtwoordkluis.</p>
+</section>
+
+<section id="reset">
+<h2>Reset en herstel</h2>
+<div class="tbl"><table>
+<thead><tr><th>Commando</th><th>Wat het doet</th><th>Duur (schatting)</th></tr></thead>
+<tbody>
+<tr><td class="mono nowrap">save-work.sh</td><td>Exporteert Corteza-namespace en workflows, gewijzigde midPoint-objecten (REST naar XML) en een authentik-blueprint (<code>ak export_blueprint</code>) naar branch <code>hack/&lt;tijd&gt;</code>. Altijd eerst draaien.</td><td>&lt; 1 min</td></tr>
+<tr><td class="mono nowrap">reset.sh &lt;component&gt;</td><td>Stopt de container, zet de golden dump en volumes terug, start opnieuw. Componenten: <code>authentik</code>, <code>midpoint</code>, <code>corteza</code>.</td><td>1 à 3 min (midPoint het langst)</td></tr>
+<tr><td class="mono nowrap">reset-entra.ps1</td><td>Haalt niet-baseline leden uit de JIT-groepen, trekt actieve PIM-toewijzingen in (<code>adminRemove</code>), zet baseline terug, trekt sessies van testgebruikers in.</td><td>1 à 2 min</td></tr>
+<tr><td class="mono nowrap">reset.sh all</td><td>Alles, in vaste volgorde: Entra, authentik, midPoint, Corteza. Daarna een midPoint-reconciliatie tegen Entra, zodat register en tenant weer kloppen.</td><td>5 à 8 min</td></tr>
+<tr><td class="mono nowrap">snapshot.sh</td><td>Maakt nieuwe golden dumps. Alleen tijdens de voorbereiding.</td><td>&lt; 1 min</td></tr>
+</tbody></table></div>
+<p class="note">Resetten wist wat er tijdens de hackathon gebouwd is. Daarom eerst <code>save-work.sh</code>. En reset je alleen midPoint terwijl Entra nog JIT-leden heeft, dan lopen register en tenant uiteen; draai dan een reconciliatie of reset beide.</p>
+</section>
+
+<section id="voorbereiding">
+<h2>Voorbereiding</h2>
+<p>Eddie zet in het weekend alles op, met Claude Code. De tijden zijn schattingen voor iemand die de tools kent maar ze nog niet samen heeft gedraaid; samen ongeveer 15 uur. midPoint op zondag is het grootste blok, maar het team heeft ervaring met resources, rollen en inducements.</p>
+<div class="timeline">
+  <div><span class="when">do 1 – vr 2 okt</span><ul>
+    <li><b>Testtenant aanmaken</b> (Entra-beheercentrum, Tenants beheren, Maken, Workforce) met een eigen beheeraccount en MFA</li>
+    <li><b>Domein toevoegen</b>: TXT-record voor de verificatie in Cloudflare; zie <a href="#risicos">risico's</a> over apex of subdomein</li>
+    <li><b>P2-trial activeren</b> in de nieuwe tenant (30 dagen, dus tot begin november)</li>
+    <li>vCPU-quotum voor Dsv5 in <b>Sweden Central</b> checken (8 nodig)</li>
+    <li>Private GitHub-repo aanmaken, teamgenoten uitnodigen; IP-adressen verzamelen (vast kantoor-IP plus drie thuis-IP's)</li>
+    <li>K9 kiezen</li></ul></div>
+  <div><span class="when">za 3 okt</span><ul>
+    <li><b>Bicep</b>: RG, NSG, statisch IP, VM met Docker via cloud-init, DNS-zone; NS-records in Cloudflare (± 1,5 u)</li>
+    <li><b>Traefik</b> met wildcard-certificaat en whoami: eerste geldige slotje op <code>wiki.jit.techeddie.dev</code> (± 1 u)</li>
+    <li><b>authentik</b> met blueprints: users, groepen, Team Wiki-proxy, Corteza-OIDC-client, service account met token, MFA-stage voor de admin-app (± 2,5 u)</li>
+    <li><b>Corteza</b>: draait en logt in via authentik (± 1 u)</li>
+    <li><b>Entra</b> met <code>seed-entra.ps1</code>: users, P2-licenties, groepen, PIM-onboarding en -policy, app-registraties voor jwt.ms, role-assignable groepen met rollen, service principals met consent (± 2 u)</li></ul></div>
+  <div><span class="when">zo 4 okt</span><ul>
+    <li><b>midPoint</b>: HR-CSV, MS Graph-resource met correlatie op <code>employeeId</code>, zes catalogusrollen (ENT-03 en ENT-04 met inducement naar Entra), validity scanner op 1 minuut, <code>svc-corteza</code> (± 3,5 u)</li>
+    <li><b>Bewijs per koppeling</b> met Postman of Claude Code: assignment met <code>validTo</code> zet iemand in een Entra-groep en haalt hem er weer uit; authentik add/remove; PIM-eligibility; Corteza-workflow die midPoint aanroept (± 1,5 u)</li>
+    <li><b>Scripts</b>: <code>save-work</code>, <code>snapshot</code>, <code>reset</code>, <code>allow-my-ip</code>, <code>reset-entra</code>; golden dumps; <code>CLAUDE.md</code> en <code>AGENTS.md</code> (± 1,5 u)</li></ul></div>
+  <div><span class="when">ma 5 – di 6 okt</span><ul><li>Teamgenoten: <code>allow-my-ip.sh</code> draaien, overal inloggen, één API-call per systeem (± 30 min elk)</li><li>Wie het connector-spoor doet: ConnDev lokaal bouwen en een lege bundle in de midPoint-container laten laden (± 1 u)</li></ul></div>
+  <div><span class="when">wo 7 of do 8 okt</span><ul><li>Dry-run op afstand (45 min): de checklist hieronder, plus één reset</li><li>Golden dumps verversen, disk-snapshot maken</li></ul></div>
+  <div><span class="when">vr 9 okt</span><ul><li>12:00: VM aan (auto-shutdown staat op 20:00), kantoor-IP in de allowlist, snelle rooktest</li><li>12:45: iedereen ingelogd op alle GUI's</li></ul></div>
+</div>
+<h3>Snijlijnen als het weekend uitloopt</h3>
+<p>Laat in deze volgorde vallen; de demo blijft dan intact.</p>
+<ol>
+<li>Key Vault (gebruik een gedeelde kluis)</li>
+<li>Dozzle (logs via <code>docker compose logs</code>)</li>
+<li>Postman-collectie (Claude Code maakt de calls ter plekke)</li>
+<li>ENT-05 HR Portal (één PIM-groep is genoeg voor het P2-scenario)</li>
+<li>Golden dumps (terugvallen op rebuild vanuit code plus de disk-snapshot)</li>
+<li>MFA-stage voor de authentik admin-app (wordt een hackathon-taak)</li>
+</ol>
+
+<h3>Klaar-checklist</h3>
+<ul>
+<li>Alle vijf hostnamen openen met geldig certificaat vanaf alle drie laptops</li>
+<li>Elke testgebruiker kan inloggen in authentik en Entra; MFA voor bram.devries en dirk.visser geregistreerd</li>
+<li>midPoint toont alle zes gebruikers, gekoppeld aan hun Entra-account</li>
+<li>Corteza-workflow maakt een assignment aan in midPoint</li>
+<li>midPoint kent een Entra-groep toe en trekt hem na <code>validTo</code> weer in; een reconciliatie meldt geen verschillen</li>
+<li>authentik add/remove en een PIM-eligibility-request werken met de service-accounts</li>
+<li>Negatieve tests werken: Team Wiki geweigerd zonder groep, jwt.ms geeft AADSTS50105 zonder toewijzing</li>
+<li><code>reset.sh</code> per component getest en getimed</li>
+</ul>
+</section>
+
+<section id="draaiboek">
+<h2>Draaiboek hackathon</h2>
+<div class="timeline">
+  <div><span class="when">13:00 – 13:20</span><div>Kick-off: doel, demoscenario's, korte rondleiding door de omgeving, iedereen checkt toegang.</div></div>
+  <div><span class="when">13:20 – 15:30</span><div>Bouwen in drie sporen (zie hieronder). Elk half uur vijf minuten afstemmen over de interfaces tussen de sporen.</div></div>
+  <div><span class="when">15:30 – 16:15</span><div>Integreren: de volledige flow end-to-end per scenario.</div></div>
+  <div><span class="when">16:15 – 16:45</span><div>Demoscenario's 1 t/m 6 doorlopen, bevindingen noteren.</div></div>
+  <div><span class="when">16:45 – 17:00</span><div><code>save-work.sh</code>, retro: wat werkte per scenario, wat ontbrak, wat nemen we mee.</div></div>
+</div>
+<div class="tracks">
+  <div class="track"><h4>Spoor 1 · Corteza</h4><ul><li>Aanvraagformulier en goedkeuringsscherm</li><li>Goedkeuringsworkflow met regels normaal/privileged</li><li>Registratie in midPoint, uitvoerstappen voor authentik en PIM</li><li>Revoke-workflow voor authentik, overzicht van grants</li></ul></div>
+  <div class="track"><h4>Spoor 2 · midPoint en Entra</h4><ul><li>Wie mag wat aanvragen (autorisaties, maximale duur)</li><li>Policy rules: geen self-approval, uit dienst mag niets</li><li>Toekennen en intrekken voor ENT-03 en ENT-04, drift-demo</li><li>PIM-policy (MFA, max. duur) en test van P-b</li></ul></div>
+  <div class="track"><h4>Spoor 3 · authentik-connector</h4><ul><li>ConnDev-connector met Claude Code: groepen en leden lezen, toevoegen, verwijderen</li><li>Resource en inducements in midPoint</li><li>Werkt het vóór 15:30, dan gaat authentik in de integratie via midPoint</li><li>Valt het af: helpen met spoor 1 en de step-up MFA</li></ul></div>
+</div>
+</section>
+
+<section id="risicos">
+<h2>Risico's</h2>
+<div class="tbl"><table>
+<thead><tr><th>Risico</th><th>Gevolg</th><th>Maatregel</th></tr></thead>
+<tbody>
+<tr><td>Weekend loopt uit</td><td>Niet alles staat klaar op 9 oktober</td><td>Volgorde aanhouden (fundament eerst), snijlijnen gebruiken, dry-run op wo/do laat zien wat ontbreekt.</td></tr>
+<tr><td>midPoint-configuratie kost meer tijd dan gepland</td><td>Entra-provisioning werkt niet op zondag</td><td>Klein risico gezien de ervaring in het team. Begin met de voorbeelden van Evolveum voor de MS Graph-connector. Terugval: ook voor Entra zonder P2 roept Corteza de Graph-API aan en registreert midPoint alleen.</td></tr>
+<tr><td>MS Graph-connector niet compatibel met midPoint 4.10</td><td>Idem</td><td>Als eerste midPoint-stap op zondag testen; zelfde terugval.</td></tr>
+<tr><td>authentik-connector lukt niet op de dag</td><td>authentik blijft zonder reconciliatie</td><td>Geen impact op de demo: de Corteza-route staat al. Resultaat meenemen naar een vervolg.</td></tr>
+<tr><td>Cloudflare-record per ongeluk op "proxied"</td><td>Allowlist ziet Cloudflare-IP's, niemand komt erin; certificaatfouten</td><td>Records op DNS only, of het subdomein delegeren (T-b), dan speelt dit niet.</td></tr>
+<tr><td>Intrekken beëindigt geen lopende sessie</td><td>Demo lijkt te falen: toegang blijft na afloop</td><td>authentik-sessies via de API verwijderen. Entra: <code>revokeSignInSessions</code> trekt refresh tokens in, maar access tokens blijven 60 à 90 minuten geldig. Test daarom met een nieuwe login.</td></tr>
+<tr><td>Vertraging in Entra, Azure RBAC en de validity scanner</td><td>Toekennen of intrekken is niet direct zichtbaar</td><td>Rekening houden met minuten. PIM-toewijzingen kunnen niet korter dan 5 minuten en niet binnen 5 minuten na toekennen worden verwijderd.</td></tr>
+<tr><td><code>techeddie.dev</code> al geverifieerd in een andere Entra-tenant</td><td>Domein toevoegen aan de testtenant mislukt</td><td>Een domein kan maar in één Entra-tenant geverifieerd zijn. Is de apex al in gebruik (of wil je hem later elders gebruiken), verifieer dan een subdomein als <code>id.techeddie.dev</code>, met het TXT-record in Cloudflare. UPN's worden dan <code>anna.jansen@id.techeddie.dev</code>.</td></tr>
+<tr><td>Kantoor-IP onbekend of wisselend</td><td>Op kantoor geen toegang</td><td>Vooraf opvragen; <code>allow-my-ip.sh</code> als vangnet, desnoods via een hotspot.</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="vragen">
+<h2>Open vragen</h2>
+<ol>
+<li><b>K9:</b> privileged recht zonder P2 als Entra-rol via role-assignable groep (advies), als Azure RBAC in een extra subscriptie, of als app-rol?</li>
+<li><b>Domein in de testtenant:</b> is <code>techeddie.dev</code> al geverifieerd in een andere Entra-tenant (bijvoorbeeld je eigen Microsoft 365)? Zo ja, dan een subdomein.</li>
+<li><b>Kantoor:</b> wat is het vaste uitgaande IP?</li>
+</ol>
+</section>
+
+<section id="bronnen">
+<h2>Bronnen</h2>
+<ul class="src">
+<li><a href="https://docs.goauthentik.io/enterprise/enterprise-features" target="_blank" rel="noopener">authentik Enterprise features</a> (request-functie en scheduled offboarding zijn Enterprise)</li>
+<li><a href="https://goauthentik.io/blog/2025-11-13-we-removed-redis/" target="_blank" rel="noopener">authentik: We removed Redis</a> (alleen nog PostgreSQL nodig)</li>
+<li><a href="https://api.goauthentik.io/reference/core-groups-add-user-create/" target="_blank" rel="noopener">authentik API: core_groups_add_user_create</a></li>
+<li><a href="https://docs.evolveum.com/midpoint/release/4.10/" target="_blank" rel="noopener">midPoint 4.10 "Braille" release notes</a></li>
+<li><a href="https://docs.evolveum.com/connectors/connectors/com.evolveum.polygon.connector.msgraphapi.MSGraphConnector/" target="_blank" rel="noopener">midPoint Microsoft Entra (Graph API) connector</a></li>
+<li><a href="https://github.com/Evolveum/conndev" target="_blank" rel="noopener">Evolveum ConnDev</a> (low-code connectorframework)</li>
+<li><a href="https://docs.evolveum.com/connectors/connid/1.x/connector-development-guide/" target="_blank" rel="noopener">ConnId 1.x Connector Development Guide</a></li>
+<li><a href="https://github.com/cunnie/sslip.io/issues/108" target="_blank" rel="noopener">sslip.io: Let's Encrypt rate limit exhausted</a></li>
+<li><a href="https://cortezaproject.org/resources/corteza-releases/" target="_blank" rel="noopener">Corteza releases</a></li>
+<li><a href="https://docs.cortezaproject.org/corteza-docs/2024.9/integrator-guide/compose-configuration/import-export.html" target="_blank" rel="noopener">Corteza: namespaces importeren en exporteren</a></li>
+<li><a href="https://learn.microsoft.com/graph/api/resources/privilegedidentitymanagement-for-groups-api-overview?view=graph-rest-1.0" target="_blank" rel="noopener">Microsoft Graph: PIM for Groups API</a></li>
+<li><a href="https://learn.microsoft.com/graph/api/privilegedaccessgroup-post-assignmentschedulerequests?view=graph-rest-1.0" target="_blank" rel="noopener">Microsoft Graph: Create assignmentScheduleRequest</a></li>
+<li><a href="https://learn.microsoft.com/entra/id-governance/privileged-identity-management/groups-assign-member-owner" target="_blank" rel="noopener">Entra: eligibility toewijzen in PIM for Groups</a> (5-minutenregel, licentie per eligible gebruiker)</li>
+<li><a href="https://learn.microsoft.com/entra/id-governance/licensing-fundamentals" target="_blank" rel="noopener">Entra ID Governance licensing fundamentals</a></li>
+<li><a href="https://developers.cloudflare.com/dns/manage-dns-records/how-to/subdomains-outside-cloudflare/" target="_blank" rel="noopener">Cloudflare: subdomeinen buiten Cloudflare (NS-delegatie)</a></li>
+<li><a href="https://developers.cloudflare.com/fundamentals/api/how-to/restrict-tokens/" target="_blank" rel="noopener">Cloudflare: API-tokens beperken (IP, TTL)</a></li>
+<li><a href="https://docs.cortezaproject.org/corteza-docs/2021.9/integrator-guide/automation/workflows/delaying-scheduling.html" target="_blank" rel="noopener">Corteza: workflows vertragen en inplannen</a></li>
+</ul>
+</section>
+
+<footer>Concept v0.4, 30 september 2026. Besloten: midPoint voert uit waar het kan (K1), één nieuwe testtenant op techeddie.dev met P2-trial, publiek met IP-allowlist, PIM-patroon P-b, <code>jit.techeddie.dev</code> gedelegeerd naar Azure DNS, Sweden Central, GitHub private repo, start 9 oktober 13:00. Open: K9.</footer>
+</main>
+</div>

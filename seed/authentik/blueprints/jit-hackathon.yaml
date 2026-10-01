@@ -1,0 +1,233 @@
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+# JIT hackathon: groepen, testgebruikers, service account, Team Wiki, Dozzle en Corteza-OIDC.
+#
+# Wordt automatisch toegepast door de authentik-worker (gemount op /blueprints/custom)
+# en elk uur opnieuw. Let op:
+# - JIT-groepen krijgen hier GEEN leden; die beheert de JIT-flow. Een re-apply wist ze dus niet.
+# - Wachtwoorden en tokens komen uit de omgeving (!Env), zie compose/.env.
+version: 1
+metadata:
+  name: JIT hackathon
+  labels:
+    blueprints.goauthentik.io/description: "Testdata voor de JIT-hackathon"
+entries:
+  # ------------------------------------------------------------ Groepen
+  - model: authentik_core.group
+    id: grp-app-wiki-users
+    identifiers: {name: app-wiki-users}
+    attrs:
+      is_superuser: false
+      attributes: {jit_entitlement: ENT-01, jit_type: normaal}
+
+  - model: authentik_core.group
+    id: grp-priv-authentik-admins
+    identifiers: {name: priv-authentik-admins}
+    attrs:
+      is_superuser: true
+      attributes: {jit_entitlement: ENT-02, jit_type: privileged}
+
+  - model: authentik_core.group
+    id: grp-hack-admins
+    identifiers: {name: hack-admins}
+    attrs:
+      is_superuser: true
+      attributes: {description: "Permanente beheerders (teamleden)"}
+
+  - model: authentik_core.group
+    id: grp-svc-api
+    identifiers: {name: svc-api-superusers}
+    attrs:
+      is_superuser: true
+      attributes: {description: "Service accounts voor de JIT-orkestratie (hackathon: breed, later inperken)"}
+
+  # ------------------------------------------------------------ Testgebruikers (zie seed/users.csv)
+  - model: authentik_core.user
+    identifiers: {username: anna.jansen}
+    attrs:
+      name: Anna Jansen
+      email: anna.jansen@techeddie.dev
+      is_active: true
+      password: !Env JIT_TEST_USER_PASSWORD
+      attributes: {employeeId: E1001, title: Medewerker, manager: carla.bakker}
+
+  - model: authentik_core.user
+    identifiers: {username: bram.devries}
+    attrs:
+      name: Bram de Vries
+      email: bram.devries@techeddie.dev
+      is_active: true
+      password: !Env JIT_TEST_USER_PASSWORD
+      attributes: {employeeId: E1002, title: Engineer, manager: carla.bakker}
+
+  - model: authentik_core.user
+    identifiers: {username: carla.bakker}
+    attrs:
+      name: Carla Bakker
+      email: carla.bakker@techeddie.dev
+      is_active: true
+      password: !Env JIT_TEST_USER_PASSWORD
+      attributes: {employeeId: E1003, title: Manager}
+
+  - model: authentik_core.user
+    identifiers: {username: dirk.visser}
+    attrs:
+      name: Dirk Visser
+      email: dirk.visser@techeddie.dev
+      is_active: true
+      password: !Env JIT_TEST_USER_PASSWORD
+      attributes: {employeeId: E1004, title: Resource owner platform}
+
+  - model: authentik_core.user
+    identifiers: {username: eva.smit}
+    attrs:
+      name: Eva Smit
+      email: eva.smit@techeddie.dev
+      is_active: true
+      password: !Env JIT_TEST_USER_PASSWORD
+      attributes: {employeeId: E1005, title: Security officer}
+
+  - model: authentik_core.user
+    identifiers: {username: gijs.oud}
+    attrs:
+      name: Gijs Oud
+      email: gijs.oud@techeddie.dev
+      is_active: false
+      password: !Env JIT_TEST_USER_PASSWORD
+      attributes: {employeeId: E1006, title: Oud-medewerker, manager: carla.bakker}
+
+  # ------------------------------------------------------------ Teamleden (pas namen aan)
+  - model: authentik_core.user
+    identifiers: {username: hack-eddie}
+    attrs:
+      name: Hack Eddie
+      is_active: true
+      password: !Env JIT_HACK_ADMIN_PASSWORD
+      groups: [!KeyOf grp-hack-admins]
+
+  - model: authentik_core.user
+    identifiers: {username: hack-teamlid2}
+    attrs:
+      name: Hack Teamlid 2
+      is_active: true
+      password: !Env JIT_HACK_ADMIN_PASSWORD
+      groups: [!KeyOf grp-hack-admins]
+
+  - model: authentik_core.user
+    identifiers: {username: hack-teamlid3}
+    attrs:
+      name: Hack Teamlid 3
+      is_active: true
+      password: !Env JIT_HACK_ADMIN_PASSWORD
+      groups: [!KeyOf grp-hack-admins]
+
+  # ------------------------------------------------------------ Service account voor Corteza (en later midPoint)
+  - model: authentik_core.user
+    id: sa-orchestrator
+    identifiers: {username: sa-jit-orchestrator}
+    attrs:
+      name: JIT orchestrator (service account)
+      type: service_account
+      is_active: true
+      groups: [!KeyOf grp-svc-api]
+
+  - model: authentik_core.token
+    identifiers: {identifier: sa-jit-orchestrator-api}
+    attrs:
+      user: !KeyOf sa-orchestrator
+      intent: api
+      expiring: false
+      key: !Env JIT_ORCHESTRATOR_TOKEN
+      description: "API-token voor Corteza-workflows"
+
+  # ------------------------------------------------------------ Team Wiki (ENT-01): whoami achter forward auth
+  - model: authentik_providers_proxy.proxyprovider
+    id: prov-wiki
+    identifiers: {name: Team Wiki}
+    attrs:
+      mode: forward_single
+      external_host: !Format ["https://wiki.%s", !Env JIT_DOMAIN]
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      access_token_validity: minutes=10
+
+  - model: authentik_core.application
+    id: app-wiki
+    identifiers: {slug: team-wiki}
+    attrs:
+      name: Team Wiki
+      provider: !KeyOf prov-wiki
+      meta_launch_url: !Format ["https://wiki.%s", !Env JIT_DOMAIN]
+      meta_description: "Testapp voor ENT-01 (normaal). Toegang via groep app-wiki-users."
+      policy_engine_mode: any
+
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf app-wiki
+      order: 0
+    attrs:
+      group: !KeyOf grp-app-wiki-users
+      enabled: true
+
+  # ------------------------------------------------------------ Dozzle (logs): alleen hack-admins
+  - model: authentik_providers_proxy.proxyprovider
+    id: prov-logs
+    identifiers: {name: Logs}
+    attrs:
+      mode: forward_single
+      external_host: !Format ["https://logs.%s", !Env JIT_DOMAIN]
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+
+  - model: authentik_core.application
+    id: app-logs
+    identifiers: {slug: logs}
+    attrs:
+      name: Logs (Dozzle)
+      provider: !KeyOf prov-logs
+      meta_launch_url: !Format ["https://logs.%s", !Env JIT_DOMAIN]
+      policy_engine_mode: any
+
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf app-logs
+      order: 0
+    attrs:
+      group: !KeyOf grp-hack-admins
+      enabled: true
+
+  # Embedded outpost bedient beide forward-auth providers
+  - model: authentik_outposts.outpost
+    identifiers: {managed: goauthentik.io/outposts/embedded}
+    attrs:
+      providers:
+        - !KeyOf prov-wiki
+        - !KeyOf prov-logs
+
+  # ------------------------------------------------------------ Corteza-login via OIDC
+  - model: authentik_providers_oauth2.oauth2provider
+    id: prov-corteza
+    identifiers: {name: Corteza}
+    attrs:
+      client_type: confidential
+      client_id: corteza
+      client_secret: !Env JIT_CORTEZA_CLIENT_SECRET
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+      sub_mode: user_username
+      redirect_uris:
+        - matching_mode: regex
+          url: !Format ["https://portal\\.%s/.*", !Env JIT_DOMAIN]
+          redirect_uri_type: authorization
+      property_mappings:
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-profile]]
+
+  - model: authentik_core.application
+    identifiers: {slug: corteza}
+    attrs:
+      name: JIT-portaal (Corteza)
+      provider: !KeyOf prov-corteza
+      meta_launch_url: !Format ["https://portal.%s", !Env JIT_DOMAIN]
+      meta_description: "Aanvragen van tijdelijke toegang"

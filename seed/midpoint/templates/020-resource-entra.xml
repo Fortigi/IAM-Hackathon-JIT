@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Entra-testtenant via de Evolveum MS Graph-connector.
+  - Accounts worden NIET door midPoint aangemaakt: ze bestaan al (seed-entra.ps1) en worden
+    gekoppeld op de UPN-prefix (anna.jansen@techeddie.dev hoort bij midPoint-gebruiker anna.jansen).
+  - midPoint beheert alleen het lidmaatschap van de groepen die rollen ENT-03 en ENT-04 induceren.
+  - De groepsassociatie is tolerant: lidmaatschappen die midPoint niet kent (PIM-activaties,
+    app-groepen) blijven staan. Voor de drift-demo kun je dit per groep strenger maken.
+  Gebaseerd op Evolveum midpoint-samples (resources/msgraph). Eerst testen met "Test connection".
+  Template: ENTRA_* en JIT_UPN_DOMAIN worden ingevuld door scripts/vm-bootstrap.sh.
+-->
+<resource oid="79913da0-c3de-4b49-8b9a-fac52647845d"
+          xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+          xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+          xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+          xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3">
+    <name>Entra (testtenant)</name>
+    <description>JIT-doelsysteem voor ENT-03 en ENT-04</description>
+
+    <connectorRef type="c:ConnectorType">
+        <filter>
+            <q:text>connectorType = "com.evolveum.polygon.connector.msgraphapi.MSGraphConnector"</q:text>
+        </filter>
+    </connectorRef>
+
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:configurationProperties
+                xmlns:icfccp="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.evolveum.polygon.connector-msgraph/com.evolveum.polygon.connector.msgraphapi.MSGraphConnector">
+            <icfccp:clientId>${ENTRA_MIDPOINT_CLIENT_ID}</icfccp:clientId>
+            <icfccp:clientSecret>
+                <t:clearValue>${ENTRA_MIDPOINT_CLIENT_SECRET}</t:clearValue>
+            </icfccp:clientSecret>
+            <icfccp:tenantId>${ENTRA_TENANT_ID}</icfccp:tenantId>
+        </icfc:configurationProperties>
+        <icfc:resultsHandlerConfiguration>
+            <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
+            <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
+            <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
+        </icfc:resultsHandlerConfiguration>
+    </connectorConfiguration>
+
+    <schemaHandling>
+        <objectType>
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>Entra-gebruiker</displayName>
+            <default>true</default>
+            <objectClass>ri:AccountObjectClass</objectClass>
+
+            <attribute>
+                <ref>ri:memberOfGroup</ref>
+                <fetchStrategy>explicit</fetchStrategy>
+            </attribute>
+
+            <association>
+                <ref>ri:group</ref>
+                <kind>entitlement</kind>
+                <intent>group</intent>
+                <tolerant>true</tolerant>
+                <direction>objectToSubject</direction>
+                <associationAttribute>ri:members</associationAttribute>
+                <valueAttribute>ri:id</valueAttribute>
+                <shortcutAssociationAttribute>ri:memberOfGroup</shortcutAssociationAttribute>
+                <shortcutValueAttribute>icfs:uid</shortcutValueAttribute>
+            </association>
+        </objectType>
+
+        <objectType>
+            <kind>entitlement</kind>
+            <intent>group</intent>
+            <default>true</default>
+            <objectClass>ri:GroupObjectClass</objectClass>
+        </objectType>
+    </schemaHandling>
+
+    <capabilities xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+        <configured>
+            <cap:create><cap:enabled>false</cap:enabled></cap:create>
+            <cap:delete><cap:enabled>false</cap:enabled></cap:delete>
+        </configured>
+    </capabilities>
+
+    <synchronization>
+        <objectSynchronization>
+            <objectClass>ri:AccountObjectClass</objectClass>
+            <kind>account</kind>
+            <intent>default</intent>
+            <enabled>true</enabled>
+            <focusType>c:UserType</focusType>
+            <correlation>
+                <q:equal>
+                    <q:path>name</q:path>
+                    <expression>
+                        <script>
+                            <code>
+                                def upn = basic.getAttributeValue(projection, 'userPrincipalName')
+                                return upn ? upn.toString().split('@')[0] : null
+                            </code>
+                        </script>
+                    </expression>
+                </q:equal>
+            </correlation>
+            <reaction>
+                <situation>linked</situation>
+                <synchronize>true</synchronize>
+            </reaction>
+            <reaction>
+                <situation>unlinked</situation>
+                <synchronize>true</synchronize>
+                <action>
+                    <handlerUri>http://midpoint.evolveum.com/xml/ns/public/model/action-3#link</handlerUri>
+                </action>
+            </reaction>
+            <reaction>
+                <situation>deleted</situation>
+                <synchronize>true</synchronize>
+                <action>
+                    <handlerUri>http://midpoint.evolveum.com/xml/ns/public/model/action-3#unlink</handlerUri>
+                </action>
+            </reaction>
+            <!-- unmatched: geen actie (beheerders en service accounts in de tenant laten we met rust) -->
+        </objectSynchronization>
+    </synchronization>
+</resource>

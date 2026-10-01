@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Service-gebruiker voor Corteza en twee terugkerende taken.
+  svc-corteza krijgt in de hackathon de Superuser-rol (snel en zeker). Inperken is een
+  goede hackathon-taak: alleen users/rollen lezen en assignments wijzigen via REST.
+  Template: het wachtwoord (MP_SVC_CORTEZA_PASSWORD) wordt ingevuld door scripts/vm-bootstrap.sh.
+-->
+<objects xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3">
+
+    <user oid="74146c1b-0da0-46e2-b4f6-9e62dd30fecc">
+        <name>svc-corteza</name>
+        <fullName>Corteza JIT-portaal (service)</fullName>
+        <assignment>
+            <targetRef oid="00000000-0000-0000-0000-000000000004" type="RoleType"/>
+        </assignment>
+        <credentials>
+            <password>
+                <value><t:clearValue>${MP_SVC_CORTEZA_PASSWORD}</t:clearValue></value>
+            </password>
+        </credentials>
+    </user>
+
+    <task oid="16375e96-df8b-4094-85a1-1247fb1a9918">
+        <name>HR-reconciliatie (CSV)</name>
+        <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+        <executionState>runnable</executionState>
+        <schedule>
+            <recurrence>recurring</recurrence>
+            <interval>300</interval>
+        </schedule>
+        <activity>
+            <work>
+                <reconciliation>
+                    <resourceObjects>
+                        <resourceRef oid="c752a37d-2f6f-4d08-8779-bdb0e6b47c9b"/>
+                        <kind>account</kind>
+                        <intent>default</intent>
+                    </resourceObjects>
+                </reconciliation>
+            </work>
+        </activity>
+    </task>
+
+    <task oid="c96e523c-12a4-43ff-a8ce-b2bf6ca10a30">
+        <name>Entra-reconciliatie</name>
+        <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+        <executionState>runnable</executionState>
+        <schedule>
+            <recurrence>recurring</recurrence>
+            <interval>600</interval>
+        </schedule>
+        <activity>
+            <work>
+                <reconciliation>
+                    <resourceObjects>
+                        <resourceRef oid="79913da0-c3de-4b49-8b9a-fac52647845d"/>
+                        <kind>account</kind>
+                        <intent>default</intent>
+                    </resourceObjects>
+                </reconciliation>
+            </work>
+        </activity>
+    </task>
+</objects>

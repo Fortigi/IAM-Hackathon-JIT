@@ -140,7 +140,7 @@ html{scroll-behavior:smooth}
   <div class="eyebrow">IAM Hackathon · Just-in-Time Access</div>
   <h1>JIT Hackathon Blauwdruk</h1>
   <p class="lede">Plan en design voor een halve dag bouwen aan Just-in-Time toegang, normaal en privileged, met Corteza als voordeur, midPoint als register en authentik en Microsoft Entra als doelsystemen. De omgeving staat vooraf klaar in Azure en is per component binnen een paar minuten terug te zetten.</p>
-  <div class="meta"><span>Status <b>concept v0.4</b></span><span>Team <b>3 personen</b></span><span>Hackathon <b>vr 9 okt 2026, 13:00</b></span><span>Opbouw <b>za 3 – zo 4 okt</b></span><span>Domein <b>jit.techeddie.dev</b></span><span>Regio <b>Sweden Central</b></span><span>Open <b>K9</b></span></div>
+  <div class="meta"><span>Status <b>concept v0.5</b></span><span>Repo <b><a href="https://github.com/ehuibers/IAM-Hackathon-JIT" target="_blank" rel="noopener">IAM-Hackathon-JIT</a></b></span><span>Team <b>3 personen</b></span><span>Hackathon <b>vr 9 okt 2026, 13:00</b></span><span>Opbouw <b>za 3 – zo 4 okt</b></span><span>Domein <b>jit.techeddie.dev</b></span><span>Regio <b>Sweden Central</b></span><span>Open <b>K9</b></span></div>
 </header>
 
 <section id="samenvatting">
@@ -565,7 +565,7 @@ POST /v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests 
   <div><span class="when">do 1 – vr 2 okt</span><ul>
     <li><b>Testtenant aanmaken</b> (Entra-beheercentrum, Tenants beheren, Maken, Workforce) met een eigen beheeraccount en MFA</li>
     <li><b>Domein toevoegen</b>: TXT-record voor de verificatie in Cloudflare; zie <a href="#risicos">risico's</a> over apex of subdomein</li>
-    <li><b>P2-trial activeren</b> in de nieuwe tenant (30 dagen, dus tot begin november)</li>
+    <li><b>P2-trial activeren</b> in de nieuwe tenant (30 dagen, tot eind oktober). De Entra Suite-trial alleen is niet genoeg: die vraagt P1 als basis, en role-assignable groepen zijn een P1-functie. Wijs de P2-licentie toe aan alle testgebruikers die eligible worden of goedkeuren.</li>
     <li>vCPU-quotum voor Dsv5 in <b>Sweden Central</b> checken (8 nodig)</li>
     <li>Private GitHub-repo aanmaken, teamgenoten uitnodigen; IP-adressen verzamelen (vast kantoor-IP plus drie thuis-IP's)</li>
     <li>K9 kiezen</li></ul></div>
@@ -672,6 +672,6 @@ POST /v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests 
 </ul>
 </section>
 
-<footer>Concept v0.4, 30 september 2026. Besloten: midPoint voert uit waar het kan (K1), één nieuwe testtenant op techeddie.dev met P2-trial, publiek met IP-allowlist, PIM-patroon P-b, <code>jit.techeddie.dev</code> gedelegeerd naar Azure DNS, Sweden Central, GitHub private repo, start 9 oktober 13:00. Open: K9.</footer>
+<footer>Concept v0.4, 30 september 2026. Besloten: midPoint voert uit waar het kan (K1), één nieuwe testtenant op techeddie.dev met P2-trial, publiek met IP-allowlist, PIM-patroon P-b, <code>jit.techeddie.dev</code> gedelegeerd naar Azure DNS, Sweden Central, GitHub private repo, start 9 oktober 13:00. Open: K9. Uitwerking in de repo IAM-Hackathon-JIT (README is het draaiboek voor het weekend).</footer>
 </main>
 </div>

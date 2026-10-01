@@ -38,6 +38,9 @@ connectors/   ruimte voor de authentik-connector (hackathon-spoor 3)
 
 ### 1. Infrastructuur
 
+DNS kan al eerder: `./infra/dns-precreate.sh` maakt alleen de resourcegroep en de DNS-zone, zodat de NS-delegatie in Cloudflare al kan propageren.
+
+
 ```bash
 ./infra/deploy.sh
 ```
@@ -59,7 +62,7 @@ cd /opt/jit/repo
 ./scripts/vm-bootstrap.sh
 ```
 
-Tip: zet bij de eerste run `ACME_CA_SERVER=https://acme-staging-v02.api.letsencrypt.org/directory` in `compose/.env` tot alles werkt; daarna weghalen, het volume `jit_letsencrypt` verwijderen en Traefik herstarten.
+Certificaten: `.dev` staat op de HSTS-preloadlijst van browsers, dus een ongeldig of staging-certificaat kun je in de browser **niet** wegklikken. Wil je eerst met de staging-CA testen (`ACME_CA_SERVER=https://acme-staging-v02.api.letsencrypt.org/directory` in `compose/.env`), controleer dan met `curl -vk https://wiki.jit.techeddie.dev` of de uitgever *(STAGING)* is. Daarna de regel weghalen, `docker compose stop traefik && docker volume rm jit_letsencrypt && docker compose up -d traefik`. Het volume `jit_letsencrypt` valt buiten snapshot en reset, zodat je niet tegen de limiet van 5 identieke certificaten per week aanloopt.
 
 ### 3. Entra seeden (vanaf de laptop)
 

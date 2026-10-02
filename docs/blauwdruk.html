@@ -140,7 +140,7 @@ html{scroll-behavior:smooth}
   <div class="eyebrow">IAM Hackathon · Just-in-Time Access</div>
   <h1>JIT Hackathon Blauwdruk</h1>
   <p class="lede">Plan en design voor een halve dag bouwen aan Just-in-Time toegang, normaal en privileged, met Corteza als voordeur, midPoint als register en authentik en Microsoft Entra als doelsystemen. De omgeving staat vooraf klaar in Azure en is per component binnen een paar minuten terug te zetten.</p>
-  <div class="meta"><span>Status <b>concept v0.5</b></span><span>Repo <b><a href="https://github.com/Fortigi/IAM-Hackathon-JIT" target="_blank" rel="noopener">IAM-Hackathon-JIT</a></b></span><span>Team <b>3 personen</b></span><span>Hackathon <b>vr 9 okt 2026, 13:00</b></span><span>Opbouw <b>za 3 – zo 4 okt</b></span><span>Domein <b>jit.techeddie.dev</b></span><span>Regio <b>Sweden Central</b></span><span>Open <b>K9</b></span></div>
+  <div class="meta"><span>Status <b>concept v0.6</b></span><span>Repo <b><a href="https://github.com/Fortigi/IAM-Hackathon-JIT" target="_blank" rel="noopener">IAM-Hackathon-JIT</a></b></span><span>Team <b>3 personen</b></span><span>Hackathon <b>vr 9 okt 2026, 13:00</b></span><span>Opbouw <b>za 3 – zo 4 okt</b></span><span>Domein <b>jit.techeddie.dev</b></span><span>Regio <b>Sweden Central</b></span><span>Open <b>K9</b></span></div>
 </header>
 
 <section id="samenvatting">
@@ -287,7 +287,7 @@ html{scroll-behavior:smooth}
 <li><div><span class="who">Corteza</span><br>Bepaalt goedkeurders: manager bij normaal, resource owner (plus eventueel security) bij privileged. Aanvrager als goedkeurder wordt geweigerd.</div></li>
 <li><div><span class="who">Goedkeurder</span><br>Keurt goed of af in het portaal. Afwijzing sluit de aanvraag met reden.</div></li>
 <li><div><span class="who">Corteza → midPoint</span><br>Registreert de grant als assignment met <code>validTo = nu + duur</code> en het aanvraagnummer in de beschrijving. Zo staat elke grant op één plek, ook als midPoint hem niet zelf uitvoert.</div></li>
-<li><div><span class="who">Uitvoering</span><br><b>Entra zonder P2:</b> midPoint (MS Graph-connector) voegt lid toe. <b>authentik:</b> Corteza roept <code>add_user</code> aan. <b>Entra met P2:</b> Corteza maakt de gebruiker eligible met einddatum; de gebruiker activeert zelf in PIM met MFA en reden.</div></li>
+<li><div><span class="who">Uitvoering</span><br><b>Entra zonder P2:</b> midPoint (MS Graph-connector) voegt lid toe. <b>authentik:</b> Corteza roept <code>add_user</code> aan. <b>Entra met P2:</b> Corteza maakt de gebruiker eligible met einddatum; de gebruiker activeert zelf in PIM volgens de PIM-policy van de groep (MFA, reden, ticket, en bij ENT-06 goedkeuring door de resource owner in Entra).</div></li>
 <li><div><span class="who">Afloop</span><br><b>Entra zonder P2:</b> validity scanner, midPoint haalt het lid weg. <b>authentik:</b> Corteza-revoke-workflow haalt het lid weg en verwijdert bij privileged de sessies. <b>Entra met P2:</b> PIM laat eligibility en activatie zelf verlopen. De midPoint-assignment verloopt in alle gevallen op hetzelfde moment, zodat het register klopt.</div></li>
 </ol>
 
@@ -355,7 +355,7 @@ POST /v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests 
   <div class="opt rec"><h4>P-b · Eligibility, activatie in PIM <span class="chip c-ok">gekozen</span></h4><p>Na goedkeuring maakt Corteza de gebruiker eligible met een einddatum (<code>eligibilityScheduleRequests</code>). De gebruiker activeert zelf in PIM met MFA en reden.</p>
   <ul class="pc"><li class="p">IGA bepaalt wie mag, PIM regelt het moment</li><li class="p">PIM bewaakt beide klokken zelf; midPoint registreert</li><li class="c">Gebruiker werkt in twee portalen</li></ul></div>
 </div>
-<p class="advice"><b>Besloten: P-b.</b> P-a is dezelfde Corteza-stap met een ander endpoint; bouw hem als variant als er op de dag tijd over is.</p>
+<p class="advice"><b>Besloten: P-b.</b> P-a is dezelfde Corteza-stap met een ander endpoint; bouw hem als variant als er op de dag tijd over is. Hoe de activatie werkt (MFA, reden, ticket, goedkeurders) staat in de PIM-policy per groep; zie <a href="#k10">K10</a>.</p>
 </div>
 
 <div class="decision" id="k4">
@@ -437,6 +437,22 @@ POST /v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests 
 </div>
 <p class="advice"><b>Advies: S2.</b> De rest van dit document gaat hier al van uit. Test in het weekend wel of de MS Graph-connector lidmaatschap van een role-assignable groep kan wijzigen; zo niet, dan valt ENT-04 terug op S3.</p>
 </div>
+<div class="decision" id="k10">
+<h3>K10 · Beheer van de PIM-policy <span class="chip c-ok">besloten: A nu, B op de hackathon</span></h3>
+<p class="q">Naast <i>wie</i> eligible is (K3) willen we ook <i>hoe</i> activeren werkt kunnen beheren: maximale activatieduur, MFA of authenticatiecontext, reden, ticket, goedkeuring en goedkeurders, maximale duur van een eligibility en meldingen. Dat zijn per PIM-groep zes regels in de PIM-policy, allemaal via Graph te wijzigen met het applicatierecht <code>RoleManagementPolicy.ReadWrite.AzureADGroup</code>.</p>
+<div class="opts">
+  <div class="opt rec"><h4>A · Policy-as-code <span class="chip c-ok">gekozen, weekend</span></h4><p><code>seed/entra/pim-policies.json</code> met een profiel per PIM-groep, en <code>pim-policy.ps1</code> met <code>apply</code>, <code>diff</code> en <code>show</code>.</p>
+  <ul class="pc"><li class="p">Simpel, controleerbaar in git, overleeft elke reset; is meteen de seed</li><li class="p"><code>diff</code> laat zien wat iemand in de portal heeft veranderd</li><li class="c">Geen beheerscherm; wijzigen gaat via git</li></ul></div>
+  <div class="opt rec"><h4>B · Corteza als beheerscherm <span class="chip c-ok">gekozen, hackathon</span></h4><p>Per catalogusitem een PIM-profiel in Corteza. Bij opslaan zet een workflow de regels in Entra; een geplande workflow leest ze terug en meldt afwijkingen.</p>
+  <ul class="pc"><li class="p">Aanvragen en policy in één portaal; goed te demonstreren</li><li class="p">Zelfde datamodel en Graph-aanroepen als A, dus A is de referentie</li><li class="c">Meerdere aanroepen per wijziging; foutafhandeling in workflows</li></ul></div>
+  <div class="opt"><h4>C · midPoint als bron</h4><p>Policy-velden op de catalogusrol, met eigen code die ze naar Entra zet.</p>
+  <ul class="pc"><li class="p">IGA-zuiver, alles in één catalogus</li><li class="c">Extra schema plus eigen code; de MS Graph-connector kent geen PIM</li></ul></div>
+  <div class="opt"><h4>D · Entra-portal</h4><p>Handmatig per groep.</p>
+  <ul class="pc"><li class="p">Niets te bouwen</li><li class="c">Niet beheerd vanuit de JIT-oplossing; afwijkingen onzichtbaar</li></ul></div>
+</div>
+<p class="advice"><b>Besloten: A als basis in het weekend, B als onderdeel van spoor 2 op de hackathon.</b> De goedkeurders in de PIM-policy komen uit de catalogus (resource owner), zodat de goedkeuring van de eligibility in Corteza en die van de activatie in PIM bij dezelfde mensen liggen.</p>
+<p class="note">Twee dingen om te weten. <b>Activaties goedkeuren</b> kan via Graph alleen gedelegeerd door de goedkeurder zelf, niet met applicatierechten; dat gebeurt dus in Entra (My Access, PIM of de mail). <b>Een ticketnummer</b> wordt door PIM niet gecontroleerd; echte controle kan met PIM custom extensions (preview), maar die vragen een ID Governance- of Entra Suite-licentie en vallen buiten de P2-trial.</p>
+</div>
 </section>
 
 <section id="testdata">
@@ -463,8 +479,8 @@ POST /v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests 
 <tr><td class="mono">ENT-02</td><td>authentik beheerder</td><td><span class="chip c-priv">privileged</span></td><td>authentik</td><td class="mono">priv-authentik-admins</td><td>1 u (5 min)</td><td>Resource owner + security</td></tr>
 <tr><td class="mono">ENT-03</td><td>Finance Portal lezer</td><td><span class="chip c-norm">normaal</span></td><td>Entra zonder P2</td><td class="mono">app-finance-readers</td><td>8 u (10 min)</td><td>Manager</td></tr>
 <tr><td class="mono">ENT-04</td><td>Entra Helpdesk Administrator</td><td><span class="chip c-priv">privileged</span></td><td>Entra zonder P2 (role-assignable groep)</td><td class="mono">priv-entra-helpdesk-admins</td><td>2 u (5 min)</td><td>Resource owner</td></tr>
-<tr><td class="mono">ENT-05</td><td>HR Portal editor</td><td><span class="chip c-norm">normaal</span></td><td>Entra met P2 (PIM)</td><td class="mono">pim-app-hr-editors</td><td>8 u (10 min)</td><td>Manager</td></tr>
-<tr><td class="mono">ENT-06</td><td>Entra User Administrator</td><td><span class="chip c-priv">privileged</span></td><td>Entra met P2 (PIM, role-assignable)</td><td class="mono">pim-entra-user-admins</td><td>1 u (5 min)</td><td>Resource owner, MFA bij activatie</td></tr>
+<tr><td class="mono">ENT-05</td><td>HR Portal editor</td><td><span class="chip c-norm">normaal</span></td><td>Entra met P2 (PIM)</td><td class="mono">pim-app-hr-editors</td><td>8 u (10 min)</td><td>Manager (eligibility). Activatie: reden, geen goedkeuring</td></tr>
+<tr><td class="mono">ENT-06</td><td>Entra User Administrator</td><td><span class="chip c-priv">privileged</span></td><td>Entra met P2 (PIM, role-assignable)</td><td class="mono">pim-entra-user-admins</td><td>1 u (5 min)</td><td>Resource owner (eligibility). Activatie: MFA, reden, ticket, goedkeuring door dirk.visser in Entra, melding aan eva.smit</td></tr>
 </tbody></table></div>
 <p>ENT-04 en ENT-06 geven allebei een Entra-beheerrol via een role-assignable groep. Het verschil is het mechanisme: bij ENT-04 bewaakt midPoint de tijd, bij ENT-06 doet PIM dat, met MFA bij activatie. Role-assignable groepen vragen P1; dat is realistisch voor een organisatie zonder P2 (zie <a href="#k9">K9</a>).</p>
 
@@ -482,9 +498,10 @@ POST /v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests 
 <ol>
 <li>anna.jansen vraagt ENT-01 aan voor 10 minuten, carla.bakker keurt goed, Anna ziet de wiki, na 10 minuten is de toegang en de sessie weg.</li>
 <li>bram.devries vraagt ENT-04 aan voor 5 minuten met ticketnummer, dirk.visser keurt goed, bram kan als helpdeskbeheerder een wachtwoord resetten, na afloop haalt midPoint hem uit de groep.</li>
-<li>bram.devries krijgt via het portaal eligibility op ENT-06, activeert in PIM met MFA, de activatie verloopt vanzelf; na afloop van de eligibility haalt midPoint die weg.</li>
+<li>bram.devries krijgt via het portaal eligibility op ENT-06 en activeert in PIM met MFA, reden en ticketnummer. dirk.visser keurt de activatie goed in Entra, eva.smit krijgt een melding. De activatie verloopt vanzelf; na afloop van de eligibility is die ook weg.</li>
 <li>carla.bakker probeert haar eigen aanvraag goed te keuren en wordt geweigerd; gijs.oud kan niets aanvragen.</li>
 <li>eva.smit ziet alle actieve en verlopen grants in één overzicht (Corteza) en dezelfde actieve grants in midPoint.</li>
+<li>dirk.visser zet in het Corteza-beheerscherm goedkeuring uit voor ENT-06 en verkort de activatieduur. bram.devries merkt het bij de volgende activatie, en <code>pim-policy.ps1 -Action diff</code> laat de wijziging ten opzichte van de json zien.</li>
 <li>Iemand voegt anna.jansen handmatig toe aan <code>app-finance-readers</code> in Entra; na een reconciliatie heeft midPoint dat teruggedraaid (vereist een niet-tolerante groepsassociatie). Werkt de authentik-connector, dan ook voor <code>app-wiki-users</code>.</li>
 </ol>
 </section>
@@ -519,7 +536,7 @@ POST /v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests 
 <thead><tr><th>Account</th><th>Waar</th><th>Gebruikt door</th><th>Rechten</th></tr></thead>
 <tbody>
 <tr><td class="mono">sp-jit-midpoint</td><td>Entra</td><td>midPoint MS Graph-connector</td><td><code>User.ReadWrite.All</code>, <code>GroupMember.ReadWrite.All</code>, <code>Group.Read.All</code>, en voor ENT-04 (role-assignable groep) <code>RoleManagement.ReadWrite.Directory</code>. Dat laatste is in de praktijk tenant-breed beheer: alleen in de testtenant.</td></tr>
-<tr><td class="mono">sp-jit-orchestrator</td><td>Entra</td><td>Corteza (PIM-requests)</td><td><code>PrivilegedEligibilitySchedule.ReadWrite.AzureADGroup</code>, <code>PrivilegedAssignmentSchedule.ReadWrite.AzureADGroup</code> (voor P-a), <code>User.Read.All</code>. Voor role-assignable groepen mogelijk ook <code>RoleManagement.ReadWrite.Directory</code>; testen in het weekend.</td></tr>
+<tr><td class="mono">sp-jit-orchestrator</td><td>Entra</td><td>Corteza (PIM-requests en PIM-policy)</td><td><code>PrivilegedEligibilitySchedule.ReadWrite.AzureADGroup</code>, <code>PrivilegedAssignmentSchedule.ReadWrite.AzureADGroup</code> (voor P-a), <code>RoleManagementPolicy.ReadWrite.AzureADGroup</code> (PIM-policy, K10), <code>User.Read.All</code>. Voor role-assignable groepen mogelijk ook <code>RoleManagement.ReadWrite.Directory</code>; testen in het weekend.</td></tr>
 <tr><td class="mono">svc-corteza</td><td>midPoint</td><td>Corteza</td><td>REST-toegang: users en rollen lezen, assignments toevoegen, niets anders</td></tr>
 <tr><td class="mono">sa-jit-orchestrator</td><td>authentik</td><td>Corteza (en later de midPoint-connector)</td><td>Service account met API-token; users en groepen lezen, groepslidmaatschap en sessies beheren</td></tr>
 <tr><td class="mono">Corteza OIDC-client</td><td>authentik</td><td>Corteza-login</td><td>OAuth2/OIDC provider met redirect naar <code>portal.jit…</code></td></tr>
@@ -574,7 +591,7 @@ POST /v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests 
     <li><b>Traefik</b> met wildcard-certificaat en whoami: eerste geldige slotje op <code>wiki.jit.techeddie.dev</code> (± 1 u)</li>
     <li><b>authentik</b> met blueprints: users, groepen, Team Wiki-proxy, Corteza-OIDC-client, service account met token, MFA-stage voor de admin-app (± 2,5 u)</li>
     <li><b>Corteza</b>: draait en logt in via authentik (± 1 u)</li>
-    <li><b>Entra</b> met <code>seed-entra.ps1</code>: users, P2-licenties, groepen, PIM-onboarding en -policy, app-registraties voor jwt.ms, role-assignable groepen met rollen, service principals met consent (± 2 u)</li></ul></div>
+    <li><b>Entra</b> met <code>seed-entra.ps1</code>: users, P2-licenties, groepen, PIM-onboarding, app-registraties voor jwt.ms, role-assignable groepen met rollen, service principals met consent; daarna <code>pim-policy.ps1 -Action apply</code> en <code>diff</code> (± 2,5 u)</li></ul></div>
   <div><span class="when">zo 4 okt</span><ul>
     <li><b>midPoint</b>: HR-CSV, MS Graph-resource met correlatie op <code>employeeId</code>, zes catalogusrollen (ENT-03 en ENT-04 met inducement naar Entra), validity scanner op 1 minuut, <code>svc-corteza</code> (± 3,5 u)</li>
     <li><b>Bewijs per koppeling</b> met Postman of Claude Code: assignment met <code>validTo</code> zet iemand in een Entra-groep en haalt hem er weer uit; authentik add/remove; PIM-eligibility; Corteza-workflow die midPoint aanroept (± 1,5 u)</li>
@@ -618,8 +635,8 @@ POST /v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests 
 </div>
 <div class="tracks">
   <div class="track"><h4>Spoor 1 · Corteza</h4><ul><li>Aanvraagformulier en goedkeuringsscherm</li><li>Goedkeuringsworkflow met regels normaal/privileged</li><li>Registratie in midPoint, uitvoerstappen voor authentik en PIM</li><li>Revoke-workflow voor authentik, overzicht van grants</li></ul></div>
-  <div class="track"><h4>Spoor 2 · midPoint en Entra</h4><ul><li>Wie mag wat aanvragen (autorisaties, maximale duur)</li><li>Policy rules: geen self-approval, uit dienst mag niets</li><li>Toekennen en intrekken voor ENT-03 en ENT-04, drift-demo</li><li>PIM-policy (MFA, max. duur) en test van P-b</li></ul></div>
-  <div class="track"><h4>Spoor 3 · authentik-connector</h4><ul><li>ConnDev-connector met Claude Code: groepen en leden lezen, toevoegen, verwijderen</li><li>Resource en inducements in midPoint</li><li>Werkt het vóór 15:30, dan gaat authentik in de integratie via midPoint</li><li>Valt het af: helpen met spoor 1 en de step-up MFA</li></ul></div>
+  <div class="track"><h4>Spoor 2 · midPoint en Entra</h4><ul><li>Wie mag wat aanvragen (autorisaties, maximale duur)</li><li>Policy rules: geen self-approval, uit dienst mag niets</li><li>Toekennen en intrekken voor ENT-03 en ENT-04, drift-demo</li><li>PIM-policybeheer in Corteza (K10, optie B): scherm per catalogusitem, workflow die de regels zet, geplande controle op afwijkingen</li></ul></div>
+  <div class="track"><h4>Spoor 3 · authentik-connector</h4><ul><li>ConnDev-connector met Claude Code: groepen en leden lezen, toevoegen, verwijderen</li><li>Resource en inducements in midPoint</li><li>Werkt het vóór 15:30, dan gaat authentik in de integratie via midPoint</li><li>Valt het af: helpen met het PIM-policyscherm (spoor 2) of de step-up MFA</li></ul></div>
 </div>
 </section>
 
@@ -634,6 +651,8 @@ POST /v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests 
 <tr><td>authentik-connector lukt niet op de dag</td><td>authentik blijft zonder reconciliatie</td><td>Geen impact op de demo: de Corteza-route staat al. Resultaat meenemen naar een vervolg.</td></tr>
 <tr><td>Cloudflare-record per ongeluk op "proxied"</td><td>Allowlist ziet Cloudflare-IP's, niemand komt erin; certificaatfouten</td><td>Records op DNS only, of het subdomein delegeren (T-b), dan speelt dit niet.</td></tr>
 <tr><td>Intrekken beëindigt geen lopende sessie</td><td>Demo lijkt te falen: toegang blijft na afloop</td><td>authentik-sessies via de API verwijderen. Entra: <code>revokeSignInSessions</code> trekt refresh tokens in, maar access tokens blijven 60 à 90 minuten geldig. Test daarom met een nieuwe login.</td></tr>
+<tr><td>PIM-groep nog niet onder PIM gebracht</td><td>Geen policy om te wijzigen; <code>pim-policy.ps1</code> slaat de groep over</td><td>Groep één keer onder PIM brengen (Entra &gt; PIM &gt; Groups &gt; Discover groups) en opnieuw <code>apply</code>.</td></tr>
+<tr><td>Verwachting dat Corteza activaties goedkeurt</td><td>Werkt niet: goedkeuren kan alleen door de goedkeurder zelf in Entra</td><td>In de demo goedkeuren via My Access of PIM; Corteza beheert alleen wie goedkeurt.</td></tr>
 <tr><td>Vertraging in Entra, Azure RBAC en de validity scanner</td><td>Toekennen of intrekken is niet direct zichtbaar</td><td>Rekening houden met minuten. PIM-toewijzingen kunnen niet korter dan 5 minuten en niet binnen 5 minuten na toekennen worden verwijderd.</td></tr>
 <tr><td><code>techeddie.dev</code> al geverifieerd in een andere Entra-tenant</td><td>Domein toevoegen aan de testtenant mislukt</td><td>Een domein kan maar in één Entra-tenant geverifieerd zijn. Is de apex al in gebruik (of wil je hem later elders gebruiken), verifieer dan een subdomein als <code>id.techeddie.dev</code>, met het TXT-record in Cloudflare. UPN's worden dan <code>anna.jansen@id.techeddie.dev</code>.</td></tr>
 <tr><td>Kantoor-IP onbekend of wisselend</td><td>Op kantoor geen toegang</td><td>Vooraf opvragen; <code>allow-my-ip.sh</code> als vangnet, desnoods via een hotspot.</td></tr>
@@ -672,6 +691,6 @@ POST /v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests 
 </ul>
 </section>
 
-<footer>Concept v0.4, 30 september 2026. Besloten: midPoint voert uit waar het kan (K1), één nieuwe testtenant op techeddie.dev met P2-trial, publiek met IP-allowlist, PIM-patroon P-b, <code>jit.techeddie.dev</code> gedelegeerd naar Azure DNS, Sweden Central, GitHub private repo, start 9 oktober 13:00. Open: K9. Uitwerking in de repo IAM-Hackathon-JIT (README is het draaiboek voor het weekend).</footer>
+<footer>Concept v0.6, 2 oktober 2026. Besloten: midPoint voert uit waar het kan (K1), één nieuwe testtenant op techeddie.dev met P2-trial, publiek met IP-allowlist, PIM-patroon P-b, PIM-policy als code met een Corteza-beheerscherm op de hackathon (K10), <code>jit.techeddie.dev</code> gedelegeerd naar Azure DNS, Sweden Central, GitHub private repo, start 9 oktober 13:00. Open: K9. Uitwerking in de repo IAM-Hackathon-JIT (README is het draaiboek voor het weekend).</footer>
 </main>
 </div>

@@ -82,6 +82,32 @@ curl -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -X PO
 
 PIM: toewijzingen minimaal 5 minuten, en niet binnen 5 minuten na toekennen in te trekken.
 
+### PIM-policy (per PIM-groep)
+
+Bron van waarheid: `seed/entra/pim-policies.json`; toepassen en vergelijken met `seed/entra/pim-policy.ps1` (`-Action apply|diff|show`). Het Corteza-beheerscherm (hackathon, spoor 2) gebruikt hetzelfde model en dezelfde Graph-aanroepen, met `sp-jit-orchestrator` (recht `RoleManagementPolicy.ReadWrite.AzureADGroup`).
+
+| Instelling | Rule-id | Velden |
+|---|---|---|
+| Max. activatieduur | `Expiration_EndUser_Assignment` | `isExpirationRequired`, `maximumDuration` |
+| MFA / reden / ticket | `Enablement_EndUser_Assignment` | `enabledRules`: `MultiFactorAuthentication`, `Justification`, `Ticketing` |
+| CA-authenticatiecontext | `AuthenticationContext_EndUser_Assignment` | `isEnabled`, `claimValue` |
+| Goedkeuring + goedkeurders | `Approval_EndUser_Assignment` | `setting.isApprovalRequired`, `setting.approvalStages[0].primaryApprovers` |
+| Max. duur eligibility | `Expiration_Admin_Eligibility` | `isExpirationRequired`, `maximumDuration` |
+| Meldingen bij activatie | `Notification_Admin_EndUser_Assignment` | `notificationRecipients` |
+
+```bash
+# policy-id van een groep
+curl -H "Authorization: Bearer $TOKEN" "https://graph.microsoft.com/v1.0/policies/roleManagementPolicyAssignments?\$filter=scopeId%20eq%20'<group-id>'%20and%20scopeType%20eq%20'Group'%20and%20roleDefinitionId%20eq%20'member'"
+# regel wijzigen (body altijd met @odata.type en target)
+curl -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -X PATCH \
+  "https://graph.microsoft.com/v1.0/policies/roleManagementPolicies/<policy-id>/rules/Enablement_EndUser_Assignment" -d '{
+  "@odata.type":"#microsoft.graph.unifiedRoleManagementPolicyEnablementRule","id":"Enablement_EndUser_Assignment",
+  "enabledRules":["Justification","MultiFactorAuthentication","Ticketing"],
+  "target":{"caller":"EndUser","operations":["All"],"level":"Assignment","inheritableSettings":[],"enforcedSettings":[]}}'
+```
+
+Let op: een activatie **goedkeuren** kan via Graph alleen gedelegeerd door de goedkeurder zelf, niet met applicatierechten. Goedkeuren gebeurt dus in Entra (My Access, PIM of de mail); Corteza bepaalt alleen wíe de goedkeurders zijn. Een ticketnummer wordt door PIM niet gecontroleerd.
+
 ## Regels
 
 - Alleen de testtenant. Service principals hebben zware rechten (`RoleManagement.ReadWrite.Directory`).

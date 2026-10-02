@@ -80,7 +80,17 @@ ENTRA_MIDPOINT_CLIENT_SECRET=...   # servicePrincipals.sp-jit-midpoint.clientSec
 
 en draai `./scripts/vm-bootstrap.sh --force-midpoint-objects && (cd compose && docker compose restart midpoint)`.
 
-Meldt het script dat er nog geen PIM-policy is voor een PIM-groep: open de groep één keer in Entra > PIM > Groups > Discover groups en draai het script opnieuw.
+#### PIM-policy (policy-as-code)
+
+De instellingen van de twee PIM-groepen (activatieduur, MFA, reden, ticket, goedkeuring en goedkeurders, duur van een eligibility, meldingen) staan in `seed/entra/pim-policies.json`.
+
+```bash
+pwsh ./seed/entra/pim-policy.ps1 -TenantId <tenant-guid> -Action diff    # verschillen met Entra tonen
+pwsh ./seed/entra/pim-policy.ps1 -TenantId <tenant-guid> -Action apply   # json toepassen
+pwsh ./seed/entra/pim-policy.ps1 -TenantId <tenant-guid> -Action show    # huidige stand
+```
+
+Meldt het script dat er nog geen PIM-policy is voor een groep: breng de groep één keer onder PIM (Entra > ID Governance > PIM > Groups > Discover groups) en draai `apply` opnieuw. Met `-UseApp` gebruikt het script `sp-jit-orchestrator` (`ORCH_CLIENT_ID` / `ORCH_CLIENT_SECRET`), zoals Corteza dat straks doet. Tijdens de hackathon bouwt spoor 2 hiervoor een beheerscherm in Corteza.
 
 ### 4. midPoint
 

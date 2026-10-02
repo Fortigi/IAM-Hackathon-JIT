@@ -1,0 +1,58 @@
+{
+  "_uitleg": [
+    "PIM-policy per PIM-groep (policy-as-code). Toepassen: pwsh ./seed/entra/pim-policy.ps1 -TenantId <id> -Action apply",
+    "Afwijkingen tonen: -Action diff. Huidige stand tonen: -Action show.",
+    "activation.maxDuration / eligibility.maxDuration: ISO 8601-duur (PT1H, PT8H, P30D).",
+    "activation.authContext: id van een Conditional Access-authenticatiecontext (bv. c1) in plaats van MFA, of null.",
+    "approval.approvers en notifyOnActivation: {\"user\": \"<username>\"} of {\"group\": \"<groepsnaam>\"}; usernames worden <username>@<Domain>.",
+    "Tijdens de hackathon bouwt spoor 2 een Corteza-scherm (optie B) dat hetzelfde model gebruikt."
+  ],
+  "groups": {
+    "pim-app-hr-editors": {
+      "entitlement": "ENT-05",
+      "type": "normaal",
+      "activation": {
+        "maxDuration": "PT8H",
+        "requireMfa": false,
+        "authContext": null,
+        "requireJustification": true,
+        "requireTicket": false
+      },
+      "approval": {
+        "required": false,
+        "approverJustificationRequired": false,
+        "approvers": []
+      },
+      "eligibility": {
+        "expirationRequired": true,
+        "maxDuration": "P90D"
+      },
+      "notifyOnActivation": []
+    },
+    "pim-entra-user-admins": {
+      "entitlement": "ENT-06",
+      "type": "privileged",
+      "activation": {
+        "maxDuration": "PT1H",
+        "requireMfa": true,
+        "authContext": null,
+        "requireJustification": true,
+        "requireTicket": true
+      },
+      "approval": {
+        "required": true,
+        "approverJustificationRequired": true,
+        "approvers": [
+          { "user": "dirk.visser" }
+        ]
+      },
+      "eligibility": {
+        "expirationRequired": true,
+        "maxDuration": "P30D"
+      },
+      "notifyOnActivation": [
+        { "user": "eva.smit" }
+      ]
+    }
+  }
+}

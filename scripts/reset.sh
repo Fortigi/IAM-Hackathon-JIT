@@ -20,3 +20,4 @@ echo
 echo "Klaar. Vergeet niet:"
 echo " - Entra: pwsh ./seed/entra/reset-entra.ps1 -TenantId <id>  (vanaf je laptop)"
 echo " - midPoint: draai daarna de taak 'Entra-reconciliatie' zodat register en tenant weer kloppen"
+echo " - PIM-policy: pwsh ./seed/entra/pim-policy.ps1 -TenantId <id> -Action diff  (en zo nodig apply)"

@@ -7,7 +7,7 @@
   - Groepen voor ENT-03..ENT-06 (twee role-assignable) en roltoewijzingen aan groepen
   - App-registraties Finance Portal en HR Portal (redirect https://jwt.ms, toewijzing vereist)
   - Service principals sp-jit-midpoint en sp-jit-orchestrator met Graph-applicatierechten + admin consent
-  - PIM-policy (max. 1 uur activatie, MFA en reden) voor de twee PIM-groepen, best effort
+  - PIM-policy wordt NIET hier gezet: draai daarna seed/entra/pim-policy.ps1 (policy-as-code)
   Schrijft id's en secrets naar seed/entra/out/entra-seed.json (staat in .gitignore).
 
 .EXAMPLE
@@ -202,7 +202,7 @@ function New-AppSecret {
 
 $spDefs = [ordered]@{
   'sp-jit-midpoint' = @('User.ReadWrite.All', 'GroupMember.ReadWrite.All', 'Group.Read.All', 'Directory.Read.All', 'RoleManagement.ReadWrite.Directory')
-  'sp-jit-orchestrator' = @('User.Read.All', 'Group.Read.All', 'PrivilegedEligibilitySchedule.ReadWrite.AzureADGroup', 'PrivilegedAssignmentSchedule.ReadWrite.AzureADGroup', 'RoleManagement.ReadWrite.Directory')
+  'sp-jit-orchestrator' = @('User.Read.All', 'Group.Read.All', 'PrivilegedEligibilitySchedule.ReadWrite.AzureADGroup', 'PrivilegedAssignmentSchedule.ReadWrite.AzureADGroup', 'RoleManagementPolicy.ReadWrite.AzureADGroup', 'RoleManagement.ReadWrite.Directory')
 }
 $spOut = @{}
 $secretFile = Join-Path $OutDir 'entra-seed.json'
@@ -214,26 +214,6 @@ foreach ($name in $spDefs.Keys) {
   $secret = $previous.servicePrincipals.$name.clientSecret
   if (-not $secret) { $secret = New-AppSecret -App $a.app -Label 'hackathon' }
   $spOut[$name] = @{ clientId = $a.app.appId; clientSecret = $secret }
-}
-
-# ------------------------------------------------------------------ PIM-policy voor de PIM-groepen (best effort)
-$target = @{ caller = 'EndUser'; operations = @('All'); level = 'Assignment'; inheritableSettings = @(); enforcedSettings = @() }
-foreach ($k in 'pim-app-hr-editors', 'pim-entra-user-admins') {
-  $gid = $groups[$k]
-  try {
-    $pa = Get-Single "/policies/roleManagementPolicyAssignments?`$filter=scopeId eq '$gid' and scopeType eq 'Group' and roleDefinitionId eq 'member'"
-    if (-not $pa) { Write-Warning "$k : nog geen PIM-policy. Open de groep één keer in PIM (Groups > Discover groups) en draai opnieuw."; continue }
-    $pid_ = $pa.policyId
-    Invoke-Graph -Method PATCH -Uri "/policies/roleManagementPolicies/$pid_/rules/Expiration_EndUser_Assignment" -Body @{
-      '@odata.type' = '#microsoft.graph.unifiedRoleManagementPolicyExpirationRule'
-      id = 'Expiration_EndUser_Assignment'; isExpirationRequired = $true; maximumDuration = 'PT1H'; target = $target
-    } | Out-Null
-    Invoke-Graph -Method PATCH -Uri "/policies/roleManagementPolicies/$pid_/rules/Enablement_EndUser_Assignment" -Body @{
-      '@odata.type' = '#microsoft.graph.unifiedRoleManagementPolicyEnablementRule'
-      id = 'Enablement_EndUser_Assignment'; enabledRules = @('MultiFactorAuthentication', 'Justification'); target = $target
-    } | Out-Null
-    Write-Host "PIM-policy ingesteld voor $k (max 1 uur, MFA + reden)"
-  } catch { Write-Warning "PIM-policy voor $k niet gezet: $($_.Exception.Message). Stel in via de portal." }
 }
 
 # ------------------------------------------------------------------ Output
@@ -253,3 +233,5 @@ Write-Host "Voor compose/.env op de VM:"
 Write-Host "  ENTRA_TENANT_ID=$TenantId"
 Write-Host "  ENTRA_MIDPOINT_CLIENT_ID=$($spOut['sp-jit-midpoint'].clientId)"
 Write-Host "  ENTRA_MIDPOINT_CLIENT_SECRET=<zie $secretFile>"
+Write-Host ""
+Write-Host "Volgende stap: pwsh ./seed/entra/pim-policy.ps1 -TenantId $TenantId -Action apply"

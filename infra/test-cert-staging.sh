@@ -14,11 +14,23 @@ export AZURE_SUBSCRIPTION_ID=$AZ_SUBSCRIPTION_ID
 export AZURE_RESOURCE_GROUP=$AZ_RG
 export AZURE_ZONE_NAME=$DNS_ZONE
 
+# Publieke resolvers gebruiken, niet de lokale DNS (die kan een oude NXDOMAIN gecached hebben)
+RESOLVERS=${RESOLVERS:-1.1.1.1:53,8.8.8.8:53}
+
+echo "== NS-delegatie volgens 1.1.1.1:"
+NS=$(dig NS "$DNS_ZONE" @1.1.1.1 +short)
+echo "${NS:-<geen>}"
+if ! grep -q azure-dns <<<"$NS"; then
+  echo "FOUT: $DNS_ZONE is (nog) niet gedelegeerd naar Azure DNS. Controleer de NS-records in Cloudflare."
+  echo "      Diagnose: dig +trace NS $DNS_ZONE"
+  exit 1
+fi
+
 OUT=$(mktemp -d)
-echo "== NS-delegatie:"; dig NS "$DNS_ZONE" @1.1.1.1 +short || true
-echo "== Staging-certificaat aanvragen (opslag: $OUT)"
+echo "== Staging-certificaat aanvragen (opslag: $OUT, resolvers: $RESOLVERS)"
 lego run --path "$OUT" --server letsencrypt-staging --accept-tos \
-  --email "$EMAIL" --dns azuredns -d "$DNS_ZONE" -d "*.$DNS_ZONE"
+  --email "$EMAIL" --dns azuredns --dns.resolvers "$RESOLVERS" \
+  -d "$DNS_ZONE" -d "*.$DNS_ZONE"
 echo
 find "$OUT" -name '*.crt' ! -name '*.issuer.crt' -exec openssl x509 -noout -subject -issuer -ext subjectAltName -in {} \;
 echo

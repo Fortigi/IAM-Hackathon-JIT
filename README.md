@@ -57,7 +57,7 @@ dig A wiki.jit.techeddie.dev +short # moet het publieke IP tonen
 ```bash
 ssh -A jitadmin@<publiek-ip>
 cloud-init status --wait
-git clone git@github.com:ehuibers/IAM-Hackathon-JIT.git /opt/jit/repo
+git clone git@github.com:Fortigi/IAM-Hackathon-JIT.git /opt/jit/repo
 cd /opt/jit/repo
 ./scripts/vm-bootstrap.sh
 ```

@@ -38,7 +38,7 @@ connectors/   ruimte voor de authentik-connector (hackathon-spoor 3)
 
 ### 1. Infrastructuur
 
-DNS kan al eerder: `./infra/dns-precreate.sh` maakt alleen de resourcegroep en de DNS-zone, zodat de NS-delegatie in Cloudflare al kan propageren.
+DNS kan al eerder: `./infra/dns-precreate.sh` maakt alleen de resourcegroep en de DNS-zone, zodat de NS-delegatie in Cloudflare al kan propageren. Daarna test `./infra/test-cert-staging.sh <e-mail>` de hele certificaatketen met de staging-CA (vereist `brew install lego`).
 
 
 ```bash
@@ -114,7 +114,7 @@ Plus de checklist in de blauwdruk (iedereen kan overal in, negatieve tests werke
 ```bash
 # Network Contributor zodat allow-my-ip.sh werkt
 az role assignment create --assignee <upn-teamlid> --role "Network Contributor" \
-  --scope $(az group show -n rg-jit-hackathon --query id -o tsv)
+  --scope $(az group show -n iam-hackathon-jit-rg --query id -o tsv)
 ```
 
 Teamleden draaien daarna zelf `./scripts/allow-my-ip.sh`.

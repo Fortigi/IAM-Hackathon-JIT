@@ -20,7 +20,7 @@ if [[ ! -f $ENV ]]; then
   echo "== compose/.env aanmaken"
   IMDS=$(curl -fsS -H Metadata:true "http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01" || echo '{}')
   SUB=$(jq -r '.subscriptionId // "CHANGEME"' <<<"$IMDS")
-  RG=$(jq -r '.resourceGroupName // "rg-jit-hackathon"' <<<"$IMDS")
+  RG=$(jq -r '.resourceGroupName // "iam-hackathon-jit-rg"' <<<"$IMDS")
   read -rp "E-mailadres voor Let's Encrypt en de authentik-beheerder: " ACME
   sed -e "s|^ACME_EMAIL=.*|ACME_EMAIL=$ACME|" \
       -e "s|^AZ_SUBSCRIPTION_ID=.*|AZ_SUBSCRIPTION_ID=$SUB|" \

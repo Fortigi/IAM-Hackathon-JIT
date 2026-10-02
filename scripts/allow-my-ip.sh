@@ -4,7 +4,7 @@
 # Vereist: az (ingelogd) en Network Contributor op de resourcegroep.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-RG=${AZ_RG:-rg-jit-hackathon}
+RG=${AZ_RG:-iam-hackathon-jit-rg}
 NSG=${NSG:-nsg-jit}
 [[ -f hackathon.env ]] && source hackathon.env && RG=$AZ_RG
 MYIP=$(curl -fsS https://api.ipify.org)/32

@@ -156,7 +156,10 @@ function Get-RuleSummary {
     'AuthenticationContext_*' { return "aan=$([bool]$R.isEnabled) context=$($R.claimValue)" }
     'Approval_*' {
       $s = $R.setting
-      $ids = @(foreach ($stage in @($s.approvalStages)) { foreach ($a in @($stage.primaryApprovers)) { if ($a.userId) { "u:$($a.userId)" } elseif ($a.groupId) { "g:$($a.groupId)" } } }) | Sort-Object
+      # Zonder goedkeuring negeert Entra de goedkeuringsfase en zet redenGoedkeurder zelf terug op True;
+      # alleen vergelijken wat effect heeft, anders blijft diff een afwijking melden die apply niet oplost.
+      if (-not [bool]$s.isApprovalRequired) { return 'goedkeuring=False' }
+      $ids =@(foreach ($stage in @($s.approvalStages)) { foreach ($a in @($stage.primaryApprovers)) { if ($a.userId) { "u:$($a.userId)" } elseif ($a.groupId) { "g:$($a.groupId)" } } }) | Sort-Object
       $aj = @($s.approvalStages)[0].isApproverJustificationRequired
       return "goedkeuring=$([bool]$s.isApprovalRequired) redenGoedkeurder=$([bool]$aj) goedkeurders=$($ids -join ',')"
     }

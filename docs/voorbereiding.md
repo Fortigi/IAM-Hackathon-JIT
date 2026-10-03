@@ -29,13 +29,13 @@ Stand: 3 oktober 2026.
 - [ ] **B7** authentik: MFA-stage voor de admin-app *(snijlijn: mag een hackathon-taak worden)*
 - [x] **B8** Corteza: eerste lokale account aanmaken (wordt beheerder), OIDC naar authentik instellen, inloggen als anna.jansen
 - [ ] **B9** Entra seeden: `pwsh ./seed/entra/seed-entra.ps1 -TenantId <guid>` (users, P2-licenties, groepen, apps, role-assignable groepen, service principals met consent)
-- [ ] **B10** Entra-waarden uit `seed/entra/out/entra-seed.json` in `compose/.env` op de VM; `./scripts/vm-bootstrap.sh --force-midpoint-objects` en midPoint herstarten
-- [ ] **B11** PIM-groepen één keer onder PIM brengen (PIM > Groups > Discover groups), daarna `pim-policy.ps1 -Action apply` en `-Action diff` geeft geen verschillen
-- [ ] **B12** MFA registreren voor bram.devries en dirk.visser
+- [x] **B10** Entra-waarden uit `seed/entra/out/entra-seed.json` in `compose/.env` op de VM; `./scripts/vm-bootstrap.sh --force-midpoint-objects` en midPoint herstarten
+- [x] **B11** PIM-groepen één keer onder PIM brengen (PIM > Groups > Discover groups), daarna `pim-policy.ps1 -Action apply` en `-Action diff` geeft geen verschillen
+- [x] **B12** MFA registreren voor bram.devries en dirk.visser
 
 ## C. Zondag 4 okt – midPoint, koppelingen bewijzen, scripts
 
-- [ ] **C1** midPoint: *Test connection* op *HR (CSV)* en *Entra (testtenant)*. Eerst testen of de MS Graph-connector met 4.10 werkt; zo niet, terugval: Corteza roept Graph aan, midPoint registreert alleen
+- [x] **C1** midPoint: *Test connection* op *HR (CSV)* en *Entra (testtenant)*. Eerst testen of de MS Graph-connector met 4.10 werkt; zo niet, terugval: Corteza roept Graph aan, midPoint registreert alleen
 - [ ] **C2** HR- en Entra-reconciliatie: zes gebruikers, gekoppeld op `employeeId`
 - [ ] **C3** `./scripts/midpoint-tune.sh`: validity scanner op 60 seconden
 - [ ] **C4** Bewijs ENT-03: assignment met `validTo` over 5 min zet anna.jansen in `app-finance-readers` en haalt haar er na afloop weer uit

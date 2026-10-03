@@ -38,7 +38,9 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
           direction: 'Inbound'
           access: 'Allow'
           protocol: 'Tcp'
-          sourceAddressPrefixes: allowedSourceIps
+          // Ook het eigen publieke IP: containers en scripts op de VM roepen auth/portal/midpoint
+          // via de publieke hostnaam aan, en dat verkeer komt binnen met het IP van de VM als bron.
+          sourceAddressPrefixes: concat(allowedSourceIps, [ '${pip.properties.ipAddress}/32' ])
           sourcePortRange: '*'
           destinationAddressPrefix: '*'
           destinationPortRange: '443'

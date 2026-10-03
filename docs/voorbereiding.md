@@ -8,26 +8,26 @@ Stand: 3 oktober 2026.
 
 ## A. Vooraf (gepland do 1 – vr 2 okt)
 
-- [ ] **A1** Entra-testtenant aanmaken (Workforce) met eigen beheeraccount en MFA
-- [ ] **A2** Domein `techeddie.dev` verifiëren in de testtenant (TXT-record in Cloudflare). Al geverifieerd in een andere tenant? Dan een subdomein, bv. `id.techeddie.dev`
-- [ ] **A3** P2-trial activeren in de testtenant (30 dagen, moet t/m 9 okt lopen). Entra Suite-trial alleen is niet genoeg
-- [ ] **A4** vCPU-quotum voor Dsv5 in Sweden Central controleren (8 nodig)
+- [x] **A1** Entra-testtenant aanmaken (Workforce) met eigen beheeraccount en MFA
+- [x] **A2** Domein `techeddie.dev` verifiëren in de testtenant (TXT-record in Cloudflare). Al geverifieerd in een andere tenant? Dan een subdomein, bv. `id.techeddie.dev`
+- [x] **A3** P2-trial activeren in de testtenant (30 dagen, moet t/m 9 okt lopen). Entra Suite-trial alleen is niet genoeg
+- [x] **A4** vCPU-quotum voor Dsv5 in Sweden Central controleren (8 nodig)
 - [x] **A5** Private GitHub-repo aanmaken (`Fortigi/IAM-Hackathon-JIT`)
-- [ ] **A6** Teamgenoten uitnodigen als collaborator op de repo
-- [ ] **A7** IP-adressen verzamelen: vast kantoor-IP plus drie thuis-IP's → `EXTRA_ALLOWED_IPS` in `hackathon.env`
-- [ ] **A8** K9 besluiten (advies: S2, Entra-rol via role-assignable groep) en de blauwdruk bijwerken
-- [ ] **A9** Laptop: `az login`, PowerShell 7 met `Microsoft.Graph.Authentication`, `brew install lego`, `hackathon.env` ingevuld
+- [x] **A6** Teamgenoten uitnodigen als collaborator op de repo
+- [ ] **A7** IP-adressen verzamelen: vast kantoor-IP plus drie thuis-IP's → `EXTRA_ALLOWED_IPS` in `hackathon.env` (voor een rebuild) én toevoegen aan de draaiende NSG met `./scripts/allow-my-ip.sh <ip>/32 ...`. Niet `deploy.sh` opnieuw draaien: de cloud-init is na de uitrol gewijzigd en Azure staat geen andere customData toe op een bestaande VM
+- [x] **A8** K9 besluiten (advies: S2, Entra-rol via role-assignable groep) en de blauwdruk bijwerken
+- [x] **A9** Laptop: `az login`, PowerShell 7 met `Microsoft.Graph.Authentication`, `brew install lego`, `hackathon.env` ingevuld
 
 ## B. Zaterdag 3 okt – infrastructuur, authentik, Corteza, Entra
 
 - [x] **B1** DNS-zone `jit.techeddie.dev` in Azure en NS-delegatie in Cloudflare (`dig NS jit.techeddie.dev +short` toont de Azure-nameservers)
-- [ ] **B2** Certificaatketen testen met de staging-CA: `./infra/test-cert-staging.sh <e-mail>`
-- [ ] **B3** `./infra/deploy.sh`: VM, NSG, statisch IP, A-records. Klaar als `dig A wiki.jit.techeddie.dev +short` het publieke IP geeft
-- [ ] **B4** VM inrichten: `cloud-init status --wait`, repo clonen naar `/opt/jit/repo`, `./scripts/vm-bootstrap.sh`
-- [ ] **B5** Traefik met wildcard-certificaat (productie-CA): geldig slotje op `https://wiki.jit.techeddie.dev`
-- [ ] **B6** authentik met blueprint: users, groepen, Team Wiki-proxy, Corteza-OIDC-client, `sa-jit-orchestrator` met token
+- [x] **B2** Certificaatketen testen met de staging-CA: `./infra/test-cert-staging.sh <e-mail>`
+- [x] **B3** `./infra/deploy.sh`: VM, NSG, statisch IP, A-records. Klaar als `dig A wiki.jit.techeddie.dev +short` het publieke IP geeft
+- [x] **B4** VM inrichten: `cloud-init status --wait`, repo clonen naar `/opt/jit/repo`, `./scripts/vm-bootstrap.sh`
+- [x] **B5** Traefik met wildcard-certificaat (productie-CA): geldig slotje op `https://wiki.jit.techeddie.dev`
+- [x] **B6** authentik met blueprint: users, groepen, Team Wiki-proxy, Corteza-OIDC-client, `sa-jit-orchestrator` met token
 - [ ] **B7** authentik: MFA-stage voor de admin-app *(snijlijn: mag een hackathon-taak worden)*
-- [ ] **B8** Corteza: eerste lokale account aanmaken (wordt beheerder), OIDC naar authentik instellen, inloggen als anna.jansen
+- [x] **B8** Corteza: eerste lokale account aanmaken (wordt beheerder), OIDC naar authentik instellen, inloggen als anna.jansen
 - [ ] **B9** Entra seeden: `pwsh ./seed/entra/seed-entra.ps1 -TenantId <guid>` (users, P2-licenties, groepen, apps, role-assignable groepen, service principals met consent)
 - [ ] **B10** Entra-waarden uit `seed/entra/out/entra-seed.json` in `compose/.env` op de VM; `./scripts/vm-bootstrap.sh --force-midpoint-objects` en midPoint herstarten
 - [ ] **B11** PIM-groepen één keer onder PIM brengen (PIM > Groups > Discover groups), daarna `pim-policy.ps1 -Action apply` en `-Action diff` geeft geen verschillen
@@ -85,8 +85,8 @@ Stand: 3 oktober 2026.
 
 ## Open vragen
 
-- [ ] K9: privileged recht zonder P2 (advies S2) → zie A8
-- [ ] Is `techeddie.dev` al geverifieerd in een andere Entra-tenant? → zie A2
+- [x] K9: privileged recht zonder P2 (advies S2) → zie A8
+- [x] Is `techeddie.dev` al geverifieerd in een andere Entra-tenant? → zie A2
 - [ ] Vast uitgaand kantoor-IP → zie A7
 
 ## Snijlijnen

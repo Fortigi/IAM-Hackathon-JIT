@@ -11,6 +11,6 @@ packages:
   - curl
 runcmd:
   - systemctl enable --now docker
-  - usermod -aG docker "$(getent passwd 1000 | cut -d: -f1)"
+  - usermod -aG docker "$(id -nu 1000)"
   - mkdir -p /opt/jit && chown 1000:1000 /opt/jit
 final_message: "cloud-init klaar na $UPTIME seconden"

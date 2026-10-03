@@ -220,6 +220,8 @@ services:
       DOMAIN: portal.${DOMAIN}
       DB_DSN: postgres://corteza:${CORTEZA_DB_PASS}@corteza-db:5432/corteza?sslmode=disable
       HTTP_WEBAPP_ENABLED: "true"
+      # TLS eindigt in Traefik; zonder deze vlag bouwt Corteza http://-URL's (lege pagina na inloggen)
+      HTTP_SSL_TERMINATED: "true"
     volumes:
       - corteza_data:/data
     networks: [jit]

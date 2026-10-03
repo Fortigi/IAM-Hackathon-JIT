@@ -4,6 +4,7 @@ Just-in-Time toegang (normaal en privileged) met **Corteza** als aanvraagportaal
 
 - Hackathon: vrijdag 9 oktober 2026, 13:00–17:00
 - Ontwerp en keuzes: [`docs/blauwdruk.html`](docs/blauwdruk.html)
+- Actielijst voorbereiding (afvinken wat klaar is): [`docs/voorbereiding.md`](docs/voorbereiding.md)
 - Werkafspraken voor Claude Code en Codex: [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md)
 
 | Dienst | URL | Inloggen |

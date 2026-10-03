@@ -10,6 +10,7 @@ Just-in-Time toegang bouwen in een halve dag. Een gebruiker vraagt tijdelijke to
 
 - Hackathon: vrijdag 9 oktober 2026, 13:00–17:00, met 3 deelnemers, deels op kantoor en deels remote. De omgeving wordt het weekend ervoor opgebouwd en moet per component te resetten zijn.
 - Ontwerp, keuzes, draaiboek en open vragen staan in `docs/blauwdruk.html`. Dat is de bron van waarheid: lees hem bij ontwerpvragen en werk hem bij als een keuze verandert.
+- De actielijst voor de voorbereiding staat in `docs/voorbereiding.md`. Vink een actie af (`[x]`, met wie en datum) zodra hij klaar en getest is.
 - Het team heeft geen ervaring met ConnId, Java of Groovy. Lever zulke code compleet en werkend aan, leg kort uit wat hij doet en ga niet uit van voorkennis.
 - Azure: regio Sweden Central, resourcegroep `iam-hackathon-jit-rg`. Het subdomein `jit.techeddie.dev` is gedelegeerd naar Azure DNS; `techeddie.dev` zelf staat bij Cloudflare.
 - Entra met P2 (ENT-05, ENT-06) werkt alleen als de P2-trial in de testtenant actief is en de licentie is toegewezen aan alle testgebruikers die eligible worden of goedkeuren.

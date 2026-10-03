@@ -208,7 +208,7 @@ html{scroll-behavior:smooth}
   <path d="M166,190 H188 V123 H230" class="ar" marker-end="url(#a1)"/>
   <!-- azure rg -->
   <rect x="200" y="16" width="462" height="438" rx="8" class="rg"/>
-  <text x="214" y="38" class="t-h">AZURE · rg-jit-hackathon · Sweden Central</text>
+  <text x="214" y="38" class="t-h">AZURE · iam-hackathon-jit-rg · Sweden Central</text>
   <text x="214" y="56" class="t-m">NSG: 443 (en 22) alleen vanaf team-IP's</text>
   <rect x="216" y="68" width="430" height="370" rx="6" class="bx2"/>
   <text x="230" y="90" class="t-h">VM · Ubuntu 24.04 · Docker Compose</text>
@@ -512,7 +512,7 @@ POST /v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests 
 <div class="tbl"><table>
 <thead><tr><th>Resource</th><th>Naam</th><th>Toelichting</th></tr></thead>
 <tbody>
-<tr><td>Resourcegroep</td><td class="mono">rg-jit-hackathon</td><td>Sweden Central, in de bestaande subscriptie. Alles in Bicep, zodat opruimen één delete is.</td></tr>
+<tr><td>Resourcegroep</td><td class="mono">iam-hackathon-jit-rg</td><td>Sweden Central, in de bestaande subscriptie. Alles in Bicep, zodat opruimen één delete is.</td></tr>
 <tr><td>VM</td><td class="mono">vm-jit-01</td><td>Ubuntu 24.04, D8s_v5, 128 GB Premium SSD, system-assigned managed identity, auto-shutdown 20:00.</td></tr>
 <tr><td>Publiek IP + NSG</td><td class="mono">pip-jit-01 / nsg-jit</td><td>Statisch IP. Inbound 443 (en 22) alleen vanaf kantoor- en thuis-IP's. Poort 80 dicht: certificaten via DNS-01.</td></tr>
 <tr><td>DNS-zone</td><td class="mono">jit.techeddie.dev</td><td>Bij K8 = T-b. Gedelegeerd vanuit Cloudflare met 4 NS-records; wildcard A-record <code>*</code> naar de VM. Managed identity krijgt DNS Zone Contributor voor de ACME-challenge. Bij T-a vervalt deze zone en staat <code>*.jit</code> als A-record (DNS only) in Cloudflare.</td></tr>
